@@ -218,37 +218,19 @@ public class GestorSolicitudes {
         r += "========== REPORTE DE SOLICITUDES ==========\n";
         r += "Total de solicitudes: " + lista.size() + "\n";
         r += "\n--- Por estado ---\n";
-        int p = 0, er = 0, a = 0, re = 0, c = 0;
-        for (Solicitud s : lista) {
-            if (s.estado.equals("PENDIENTE")) p++;
-            if (s.estado.equals("EN_REVISION")) er++;
-            if (s.estado.equals("APROBADA")) a++;
-            if (s.estado.equals("RECHAZADA")) re++;
-            if (s.estado.equals("CERRADA")) c++;
-        }
-        r += "PENDIENTE: " + p + "\n";
-        r += "EN_REVISION: " + er + "\n";
-        r += "APROBADA: " + a + "\n";
-        r += "RECHAZADA: " + re + "\n";
-        r += "CERRADA: " + c + "\n";
+        r += "PENDIENTE: " + contarPorEstado("PENDIENTE") + "\n";
+        r += "EN_REVISION: " + contarPorEstado("EN_REVISION") + "\n";
+        r += "APROBADA: " + contarPorEstado("APROBADA") + "\n";
+        r += "RECHAZADA: " + contarPorEstado("RECHAZADA") + "\n";
+        r += "CERRADA: " + contarPorEstado("CERRADA") + "\n";
         r += "\n--- Por prioridad ---\n";
-        int al = 0, me = 0, ba = 0;
-        for (Solicitud s : lista) {
-            if (s.prioridad.equals("ALTA")) al++;
-            if (s.prioridad.equals("MEDIA")) me++;
-            if (s.prioridad.equals("BAJA")) ba++;
-        }
-        r += "ALTA: " + al + "\n";
-        r += "MEDIA: " + me + "\n";
-        r += "BAJA: " + ba + "\n";
+        r += "ALTA: " + contarPorPrioridad("ALTA") + "\n";
+        r += "MEDIA: " + contarPorPrioridad("MEDIA") + "\n";
+        r += "BAJA: " + contarPorPrioridad("BAJA") + "\n";
         r += "\n--- Por tipo ---\n";
         String[] tipos = {"CERTIFICADO", "EQUIVALENCIA", "CAMBIO_COMISION", "RECLAMO_NOTA", "OTRO"};
-        for (String t : tipos) {
-            int x = 0;
-            for (Solicitud s : lista) {
-                if (s.tipo.equals(t)) x++;
-            }
-            r += t + ": " + x + "\n";
+        for (String tipo : tipos) {
+            r += tipo + ": " + contarPorTipo(tipo) + "\n";
         }
         r += "\n--- Sin responsable asignado ---\n";
         int sin = 0;
@@ -263,6 +245,30 @@ public class GestorSolicitudes {
         }
         r += "============================================\n";
         return r;
+    }
+
+    private int contarPorEstado(String estado) {
+        int cantidad = 0;
+        for (Solicitud solicitud : lista) {
+            if (solicitud.estado.equals(estado)) cantidad++;
+        }
+        return cantidad;
+    }
+
+    private int contarPorPrioridad(String prioridad) {
+        int cantidad = 0;
+        for (Solicitud solicitud : lista) {
+            if (solicitud.prioridad.equals(prioridad)) cantidad++;
+        }
+        return cantidad;
+    }
+
+    private int contarPorTipo(String tipo) {
+        int cantidad = 0;
+        for (Solicitud solicitud : lista) {
+            if (solicitud.tipo.equals(tipo)) cantidad++;
+        }
+        return cantidad;
     }
 
     // carga datos de ejemplo (sinteticos) para poder probar el sistema
