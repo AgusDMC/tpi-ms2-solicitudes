@@ -16,62 +16,22 @@ public class GestorSolicitudes {
     // registra una solicitud nueva. Devuelve el id o -1 si hubo error
     public int registrarSolicitud(String legajo, String nombre, String email, String carrera,
                                   String tipo, String prioridad, String descripcion, String fecha) {
-        // validar legajo
-        if (legajo == null || legajo.trim().isEmpty()) {
-            System.out.println("Error: legajo vacio");
+        if (!datosEstudianteValidos(legajo, email)) {
             return -1;
         }
-        if (legajo.length() < 4 || legajo.length() > 8) {
-            System.out.println("Error: legajo invalido");
+        if (!datosSolicitudValidos(tipo, prioridad, descripcion, fecha)) {
             return -1;
         }
-        // validar email
-        if (email == null || !email.contains("@") || !email.contains(".")) {
-            System.out.println("Error: email invalido");
-            return -1;
-        }
-        // validar tipo
-        if (!tipo.equals("CERTIFICADO") && !tipo.equals("EQUIVALENCIA") && !tipo.equals("CAMBIO_COMISION")
-                && !tipo.equals("RECLAMO_NOTA") && !tipo.equals("OTRO")) {
-            System.out.println("Error: tipo invalido");
-            return -1;
-        }
-        // validar prioridad
-        if (!prioridad.equals("ALTA") && !prioridad.equals("MEDIA") && !prioridad.equals("BAJA")) {
-            System.out.println("Error: prioridad invalida");
-            return -1;
-        }
-        if (descripcion == null || descripcion.trim().length() < 10) {
-            System.out.println("Error: la descripcion debe tener al menos 10 caracteres");
-            return -1;
-        }
-        // validar fecha
-        try {
-            LocalDate.parse(fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        } catch (Exception e) {
-            System.out.println("Error: fecha invalida");
-            return -1;
-        }
-        // buscar estudiante o crearlo
-        Estudiante est = null;
-        for (int i = 0; i < estudiantes.size(); i++) {
-            if (estudiantes.get(i).legajo.equals(legajo)) {
-                est = estudiantes.get(i);
-            }
-        }
-        if (est == null) {
-            est = new Estudiante(legajo, nombre, email, carrera);
-            estudiantes.add(est);
-        }
-        Solicitud s = new Solicitud(contador, est, tipo, prioridad, descripcion, fecha);
+        Estudiante estudiante = buscarOCrearEstudiante(legajo, nombre, email, carrera);
+
+        Solicitud s = new Solicitud(contador, estudiante, tipo, prioridad, descripcion, fecha);
         lista.add(s);
         contador++;
         System.out.println("Solicitud registrada con id " + s.id);
         return s.id;
     }
 
-    // registra un estudiante suelto (se usa en la carga inicial)
-    public boolean registrarEstudiante(String legajo, String nombre, String email, String carrera) {
+    private boolean datosEstudianteValidos(String legajo, String email) {
         if (legajo == null || legajo.trim().isEmpty()) {
             System.out.println("Error: legajo vacio");
             return false;
@@ -82,6 +42,51 @@ public class GestorSolicitudes {
         }
         if (email == null || !email.contains("@") || !email.contains(".")) {
             System.out.println("Error: email invalido");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean datosSolicitudValidos(String tipo, String prioridad, String descripcion, String fecha) {
+        if (!tipo.equals("CERTIFICADO") && !tipo.equals("EQUIVALENCIA") && !tipo.equals("CAMBIO_COMISION")
+                && !tipo.equals("RECLAMO_NOTA") && !tipo.equals("OTRO")) {
+            System.out.println("Error: tipo invalido");
+            return false;
+        }
+        if (!prioridad.equals("ALTA") && !prioridad.equals("MEDIA") && !prioridad.equals("BAJA")) {
+            System.out.println("Error: prioridad invalida");
+            return false;
+        }
+        if (descripcion == null || descripcion.trim().length() < 10) {
+            System.out.println("Error: la descripcion debe tener al menos 10 caracteres");
+            return false;
+        }
+        try {
+            LocalDate.parse(fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (Exception e) {
+            System.out.println("Error: fecha invalida");
+            return false;
+        }
+        return true;
+    }
+
+    private Estudiante buscarOCrearEstudiante(String legajo, String nombre, String email, String carrera) {
+        Estudiante estudiante = null;
+        for (int i = 0; i < estudiantes.size(); i++) {
+            if (estudiantes.get(i).legajo.equals(legajo)) {
+                estudiante = estudiantes.get(i);
+            }
+        }
+        if (estudiante == null) {
+            estudiante = new Estudiante(legajo, nombre, email, carrera);
+            estudiantes.add(estudiante);
+        }
+        return estudiante;
+    }
+
+    // registra un estudiante suelto (se usa en la carga inicial)
+    public boolean registrarEstudiante(String legajo, String nombre, String email, String carrera) {
+        if (!datosEstudianteValidos(legajo, email)) {
             return false;
         }
         for (int i = 0; i < estudiantes.size(); i++) {
