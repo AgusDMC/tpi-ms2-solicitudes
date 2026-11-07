@@ -10,14 +10,25 @@ import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.repositorio.SolicitudRepository;
 
 // Clase principal del sistema: maneja todo
 public class GestorSolicitudes {
 
-    public ArrayList<Solicitud> lista = new ArrayList<>();
-    public ArrayList<Estudiante> estudiantes = new ArrayList<>();
-    public ArrayList<Responsable> responsables = new ArrayList<>();
+    private final SolicitudRepository repositorio;
     int contador = 1;
+
+    public GestorSolicitudes(SolicitudRepository repositorio) {
+        this.repositorio = repositorio;
+    }
+
+    public List<Solicitud> listarSolicitudes() {
+        return repositorio.listarSolicitudes();
+    }
+
+    public List<Responsable> listarResponsables() {
+        return repositorio.listarResponsables();
+    }
 
     // registra una solicitud nueva. Devuelve el id o -1 si hubo error
     public int registrarSolicitud(String legajo, String nombre, String email, String carrera,
@@ -31,7 +42,7 @@ public class GestorSolicitudes {
         Estudiante estudiante = buscarOCrearEstudiante(legajo, nombre, email, carrera);
 
         Solicitud s = new Solicitud(contador, estudiante, TipoSolicitud.valueOf(tipo), Prioridad.valueOf(prioridad), descripcion, fecha);
-        lista.add(s);
+        repositorio.guardarSolicitud(s);
         contador++;
         System.out.println("Solicitud registrada con id " + s.getId());
         return s.getId();
@@ -90,15 +101,10 @@ public class GestorSolicitudes {
     }
 
     private Estudiante buscarOCrearEstudiante(String legajo, String nombre, String email, String carrera) {
-        Estudiante estudiante = null;
-        for (int i = 0; i < estudiantes.size(); i++) {
-            if (estudiantes.get(i).getLegajo().equals(legajo)) {
-                estudiante = estudiantes.get(i);
-            }
-        }
+        Estudiante estudiante = repositorio.buscarEstudiantePorLegajo(legajo);
         if (estudiante == null) {
             estudiante = new Estudiante(legajo, nombre, email, carrera);
-            estudiantes.add(estudiante);
+            repositorio.guardarEstudiante(estudiante);
         }
         return estudiante;
     }
@@ -108,29 +114,22 @@ public class GestorSolicitudes {
         if (!datosEstudianteValidos(legajo, email)) {
             return false;
         }
-        for (int i = 0; i < estudiantes.size(); i++) {
-            if (estudiantes.get(i).getLegajo().equals(legajo)) {
-                System.out.println("Error: el estudiante ya existe");
-                return false;
-            }
+        if (repositorio.buscarEstudiantePorLegajo(legajo) != null) {
+            System.out.println("Error: el estudiante ya existe");
+            return false;
         }
-        estudiantes.add(new Estudiante(legajo, nombre, email, carrera));
+        repositorio.guardarEstudiante(new Estudiante(legajo, nombre, email, carrera));
         return true;
     }
 
     public void registrarResponsable(String nombre, String area, String email) {
-        Responsable r = new Responsable(responsables.size() + 1, nombre, area, email);
-        responsables.add(r);
+        Responsable r = new Responsable(repositorio.listarResponsables().size() + 1, nombre, area, email);
+        repositorio.guardarResponsable(r);
     }
 
     // cambia el estado. Devuelve 0 si salio bien, 1 si no existe la solicitud, 2 si la transicion no es valida, 3 si falta responsable
     public int cambiarEstado(int id, String nuevo, String obs) {
-        Solicitud s = null;
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).getId() == id) {
-                s = lista.get(i);
-            }
-        }
+        Solicitud s = repositorio.buscarSolicitudPorId(id);
         if (s == null) {
             return 1;
         }
@@ -156,18 +155,8 @@ public class GestorSolicitudes {
     }
 
     public boolean asignarResponsable(int idSolicitud, int idResponsable) {
-        Solicitud s = null;
-        for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).getId() == idSolicitud) {
-                s = lista.get(i);
-            }
-        }
-        Responsable r = null;
-        for (int i = 0; i < responsables.size(); i++) {
-            if (responsables.get(i).getId() == idResponsable) {
-                r = responsables.get(i);
-            }
-        }
+        Solicitud s = repositorio.buscarSolicitudPorId(idSolicitud);
+        Responsable r = repositorio.buscarResponsablePorId(idResponsable);
         if (s == null || r == null) {
             return false;
         }
@@ -181,7 +170,7 @@ public class GestorSolicitudes {
     // busca por campo: "estado", "tipo", "prioridad", "legajo" o "responsable"
     public List<Solicitud> buscar(String campo, String valor) {
         List<Solicitud> res = new ArrayList<>();
-        for (Solicitud s : lista) {
+        for (Solicitud s : repositorio.listarSolicitudes()) {
             if (campo.equals("estado")) {
                 if (s.getEstado().name().equalsIgnoreCase(valor)) res.add(s);
             } else if (campo.equals("tipo")) {
@@ -211,7 +200,7 @@ public class GestorSolicitudes {
     public String generarReporte() {
         String r = "";
         r += "========== REPORTE DE SOLICITUDES ==========\n";
-        r += "Total de solicitudes: " + lista.size() + "\n";
+        r += "Total de solicitudes: " + repositorio.listarSolicitudes().size() + "\n";
         r += "\n--- Por estado ---\n";
         for (Estado estado : Estado.values()) {
             r += estado + ": " + contarPorEstado(estado) + "\n";
@@ -226,7 +215,7 @@ public class GestorSolicitudes {
         }
         r += "\n--- Sin responsable asignado ---\n";
         int sin = 0;
-        for (Solicitud s : lista) {
+        for (Solicitud s : repositorio.listarSolicitudes()) {
             if (s.getResponsable() == null && s.getEstado() != Estado.CERRADA) {
                 r += formatear(s) + "\n";
                 sin++;
@@ -241,7 +230,7 @@ public class GestorSolicitudes {
 
     private int contarPorEstado(Estado estado) {
         int cantidad = 0;
-        for (Solicitud solicitud : lista) {
+        for (Solicitud solicitud : repositorio.listarSolicitudes()) {
             if (solicitud.getEstado() == estado) cantidad++;
         }
         return cantidad;
@@ -249,7 +238,7 @@ public class GestorSolicitudes {
 
     private int contarPorPrioridad(Prioridad prioridad) {
         int cantidad = 0;
-        for (Solicitud solicitud : lista) {
+        for (Solicitud solicitud : repositorio.listarSolicitudes()) {
             if (solicitud.getPrioridad() == prioridad) cantidad++;
         }
         return cantidad;
@@ -257,7 +246,7 @@ public class GestorSolicitudes {
 
     private int contarPorTipo(TipoSolicitud tipo) {
         int cantidad = 0;
-        for (Solicitud solicitud : lista) {
+        for (Solicitud solicitud : repositorio.listarSolicitudes()) {
             if (solicitud.getTipo() == tipo) cantidad++;
         }
         return cantidad;

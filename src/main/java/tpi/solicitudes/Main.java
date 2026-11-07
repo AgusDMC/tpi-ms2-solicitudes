@@ -4,11 +4,12 @@ import java.util.List;
 import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.repositorio.RepositorioEnMemoria;
 
 public class Main {
 
     public static void main(String[] args) {
-        GestorSolicitudes g = new GestorSolicitudes();
+        GestorSolicitudes g = new GestorSolicitudes(new RepositorioEnMemoria());
         g.cargarDatosEjemplo();
         Scanner sc = new Scanner(System.in);
         int op = -1;
@@ -65,7 +66,7 @@ public class Main {
             } else if (op == 3) {
                 System.out.print("Id de la solicitud: ");
                 int id = Integer.parseInt(sc.nextLine().trim());
-                for (Responsable r : g.responsables) {
+                for (Responsable r : g.listarResponsables()) {
                     System.out.println(r.getId() + ". " + r.getNombre() + " - " + r.getArea());
                 }
                 System.out.print("Id del responsable: ");
@@ -88,7 +89,7 @@ public class Main {
                     System.out.println(g.formatear(s));
                 }
             } else if (op == 5) {
-                for (Solicitud s : g.lista) {
+                for (Solicitud s : g.listarSolicitudes()) {
                     System.out.println(g.formatear(s));
                 }
             } else if (op == 6) {

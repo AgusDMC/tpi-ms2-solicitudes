@@ -24,6 +24,7 @@ import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.repositorio.RepositorioEnMemoria;
 
 /**
  * Pruebas de caracterizacion de GestorSolicitudes sobre la version inicial (tag estado-inicial).
@@ -34,13 +35,15 @@ class GestorSolicitudesCaracterizacionTest {
 
     private static final String DESCRIPCION_VALIDA = "Descripcion valida de prueba";
 
+    private RepositorioEnMemoria repositorio;
     private GestorSolicitudes gestor;
     private ByteArrayOutputStream salida;
     private PrintStream salidaOriginal;
 
     @BeforeEach
     void setUp() {
-        gestor = new GestorSolicitudes();
+        repositorio = new RepositorioEnMemoria();
+        gestor = new GestorSolicitudes(repositorio);
         salidaOriginal = System.out;
         salida = new ByteArrayOutputStream();
         System.setOut(new PrintStream(salida, true));
@@ -70,7 +73,7 @@ class GestorSolicitudesCaracterizacionTest {
     }
 
     private Solicitud buscarPorId(int id) {
-        for (Solicitud s : gestor.lista) {
+        for (Solicitud s : repositorio.listarSolicitudes()) {
             if (s.getId() == id) {
                 return s;
             }
@@ -89,8 +92,8 @@ class GestorSolicitudesCaracterizacionTest {
                     "CERTIFICADO", "BAJA", "Certificado de alumno regular", "03/11/2026");
 
             assertEquals(1, id);
-            assertEquals(1, gestor.lista.size());
-            Solicitud s = gestor.lista.get(0);
+            assertEquals(1, repositorio.listarSolicitudes().size());
+            Solicitud s = repositorio.listarSolicitudes().get(0);
             assertEquals(1, s.getId());
             assertEquals("10234", s.getEstudiante().getLegajo());
             assertEquals("Ana Perez", s.getEstudiante().getNombre());
@@ -118,7 +121,7 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(1, registrarValida("1001", "OTRO", "ALTA", "01/11/2026"));
             assertEquals(-1, registrarValida("1002", "INEXISTENTE", "ALTA", "01/11/2026"));
             assertEquals(2, registrarValida("1003", "OTRO", "ALTA", "01/11/2026"));
-            assertEquals(2, gestor.lista.size());
+            assertEquals(2, repositorio.listarSolicitudes().size());
         }
 
         @Test
@@ -127,8 +130,8 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.registrarSolicitud("20001", "Juan Gomez", "juan@mail.test", "TUP",
                     "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
 
-            assertEquals(1, gestor.estudiantes.size());
-            Estudiante e = gestor.estudiantes.get(0);
+            assertEquals(1, repositorio.listarEstudiantes().size());
+            Estudiante e = repositorio.listarEstudiantes().get(0);
             assertEquals("20001", e.getLegajo());
             assertEquals("Juan Gomez", e.getNombre());
             assertEquals("juan@mail.test", e.getEmail());
@@ -143,10 +146,10 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.registrarSolicitud("20001", "Otro Nombre", "otro@mail.test", "LIC",
                     "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026");
 
-            assertEquals(1, gestor.estudiantes.size());
-            assertSame(gestor.lista.get(0).getEstudiante(), gestor.lista.get(1).getEstudiante());
-            assertEquals("Juan Gomez", gestor.lista.get(1).getEstudiante().getNombre());
-            assertEquals("juan@mail.test", gestor.lista.get(1).getEstudiante().getEmail());
+            assertEquals(1, repositorio.listarEstudiantes().size());
+            assertSame(repositorio.listarSolicitudes().get(0).getEstudiante(), repositorio.listarSolicitudes().get(1).getEstudiante());
+            assertEquals("Juan Gomez", repositorio.listarSolicitudes().get(1).getEstudiante().getNombre());
+            assertEquals("juan@mail.test", repositorio.listarSolicitudes().get(1).getEstudiante().getEmail());
         }
 
         @ParameterizedTest(name = "tipo {0}")
@@ -154,7 +157,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("acepta los cinco tipos validos")
         void aceptaTiposValidos(String tipo) {
             assertEquals(1, registrarValida("1001", tipo, "MEDIA", "01/11/2026"));
-            assertEquals(TipoSolicitud.valueOf(tipo), gestor.lista.get(0).getTipo());
+            assertEquals(TipoSolicitud.valueOf(tipo), repositorio.listarSolicitudes().get(0).getTipo());
         }
 
         @ParameterizedTest(name = "legajo de {0} caracteres")
@@ -186,7 +189,7 @@ class GestorSolicitudesCaracterizacionTest {
             int id = registrarValida("1001", "OTRO", "ALTA", "31/02/2026");
 
             assertEquals(1, id);
-            assertEquals("31/02/2026", gestor.lista.get(0).getFecha());
+            assertEquals("31/02/2026", repositorio.listarSolicitudes().get(0).getFecha());
         }
     }
 
@@ -196,8 +199,8 @@ class GestorSolicitudesCaracterizacionTest {
 
         private void assertRechazado(int id, String mensaje) {
             assertEquals(-1, id);
-            assertTrue(gestor.lista.isEmpty());
-            assertTrue(gestor.estudiantes.isEmpty());
+            assertTrue(repositorio.listarSolicitudes().isEmpty());
+            assertTrue(repositorio.listarEstudiantes().isEmpty());
             assertEquals(mensaje + "\n", consola());
         }
 
@@ -302,7 +305,7 @@ class GestorSolicitudesCaracterizacionTest {
         void tipoNuloLanzaExcepcion() {
             assertThrows(NullPointerException.class,
                     () -> registrarValida("1001", null, "MEDIA", "01/11/2026"));
-            assertTrue(gestor.lista.isEmpty());
+            assertTrue(repositorio.listarSolicitudes().isEmpty());
         }
 
         @Test
@@ -310,7 +313,7 @@ class GestorSolicitudesCaracterizacionTest {
         void prioridadNulaLanzaExcepcion() {
             assertThrows(NullPointerException.class,
                     () -> registrarValida("1001", "OTRO", null, "01/11/2026"));
-            assertTrue(gestor.lista.isEmpty());
+            assertTrue(repositorio.listarSolicitudes().isEmpty());
         }
     }
 
@@ -322,8 +325,8 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("registrarEstudiante agrega un estudiante valido")
         void registraEstudiante() {
             assertTrue(gestor.registrarEstudiante("10234", "Ana Perez", "ana@mail.test", "TUP"));
-            assertEquals(1, gestor.estudiantes.size());
-            assertEquals("Ana Perez", gestor.estudiantes.get(0).getNombre());
+            assertEquals(1, repositorio.listarEstudiantes().size());
+            assertEquals("Ana Perez", repositorio.listarEstudiantes().get(0).getNombre());
         }
 
         @Test
@@ -332,7 +335,7 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.registrarEstudiante("10234", "Ana Perez", "ana@mail.test", "TUP");
 
             assertFalse(gestor.registrarEstudiante("10234", "Otra", "otra@mail.test", "TUP"));
-            assertEquals(1, gestor.estudiantes.size());
+            assertEquals(1, repositorio.listarEstudiantes().size());
             assertEquals("Error: el estudiante ya existe\n", consola());
         }
 
@@ -345,7 +348,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("registrarEstudiante aplica las mismas validaciones de legajo y email")
         void rechazaEstudianteInvalido(String legajo, String email, String mensaje) {
             assertFalse(gestor.registrarEstudiante(legajo, "N", email, "TUP"));
-            assertTrue(gestor.estudiantes.isEmpty());
+            assertTrue(repositorio.listarEstudiantes().isEmpty());
             assertEquals(mensaje + "\n", consola());
         }
 
@@ -355,10 +358,10 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.registrarResponsable("Laura Gimenez", "Alumnado", "alumnado@facultad.test");
             gestor.registrarResponsable("Martin Sosa", "Secretaria Academica", "academica@facultad.test");
 
-            assertEquals(2, gestor.responsables.size());
-            assertEquals(1, gestor.responsables.get(0).getId());
-            assertEquals(2, gestor.responsables.get(1).getId());
-            assertEquals("Secretaria Academica", gestor.responsables.get(1).getArea());
+            assertEquals(2, repositorio.listarResponsables().size());
+            assertEquals(1, repositorio.listarResponsables().get(0).getId());
+            assertEquals(2, repositorio.listarResponsables().get(1).getId());
+            assertEquals("Secretaria Academica", repositorio.listarResponsables().get(1).getArea());
         }
     }
 
@@ -697,9 +700,9 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("carga 3 responsables, 3 estudiantes y 4 solicitudes")
         void cantidades() {
-            assertEquals(3, gestor.responsables.size());
-            assertEquals(3, gestor.estudiantes.size());
-            assertEquals(4, gestor.lista.size());
+            assertEquals(3, repositorio.listarResponsables().size());
+            assertEquals(3, repositorio.listarEstudiantes().size());
+            assertEquals(4, repositorio.listarSolicitudes().size());
         }
 
         @Test
@@ -718,7 +721,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("el siguiente registro despues de la carga recibe id 5")
         void siguienteId() {
             assertEquals(5, registrarValida("10871", "OTRO", "BAJA", "05/11/2026"));
-            assertEquals(3, gestor.estudiantes.size());
+            assertEquals(3, repositorio.listarEstudiantes().size());
         }
 
         @Test
