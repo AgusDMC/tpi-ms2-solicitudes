@@ -193,20 +193,6 @@ public class GestorSolicitudes {
         return res;
     }
 
-    // calcula la fecha limite de respuesta segun la prioridad
-    public String calcularFechaLimite(Solicitud s) {
-        int d = 0;
-        if (s.prioridad.equals("ALTA")) {
-            d = 3;
-        } else if (s.prioridad.equals("MEDIA")) {
-            d = 7;
-        } else if (s.prioridad.equals("BAJA")) {
-            d = 15;
-        }
-        LocalDate f = LocalDate.parse(s.fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        return f.plusDays(d).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-    }
-
     public String formatear(Solicitud s) {
         String resp = "Sin asignar";
         if (s.responsable != null) {
@@ -214,7 +200,7 @@ public class GestorSolicitudes {
         }
         return "#" + s.id + " | " + s.tipo + " | " + s.prioridad + " | " + s.estado
                 + " | " + s.estudiante.nombre + " (" + s.estudiante.legajo + ")"
-                + " | Resp: " + resp + " | Fecha: " + s.fecha + " | Limite: " + calcularFechaLimite(s);
+                + " | Resp: " + resp + " | Fecha: " + s.fecha + " | Limite: " + s.calcularFechaLimite();
     }
 
     // genera el reporte general
