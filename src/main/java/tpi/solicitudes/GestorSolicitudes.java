@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import tpi.solicitudes.modelo.Estado;
+import tpi.solicitudes.modelo.Prioridad;
+import tpi.solicitudes.modelo.TipoSolicitud;
 
 // Clase principal del sistema: maneja todo
 public class GestorSolicitudes {

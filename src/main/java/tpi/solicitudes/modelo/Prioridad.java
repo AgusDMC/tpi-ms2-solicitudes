@@ -1,4 +1,4 @@
-package tpi.solicitudes;
+package tpi.solicitudes.modelo;
 
 // Prioridad de una solicitud y los dias que hay para responderla
 public enum Prioridad {

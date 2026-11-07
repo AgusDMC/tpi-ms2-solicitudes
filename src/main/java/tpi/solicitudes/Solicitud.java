@@ -2,6 +2,9 @@ package tpi.solicitudes;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import tpi.solicitudes.modelo.Estado;
+import tpi.solicitudes.modelo.Prioridad;
+import tpi.solicitudes.modelo.TipoSolicitud;
 
 public class Solicitud {
     public int id;

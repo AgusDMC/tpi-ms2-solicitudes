@@ -1,4 +1,4 @@
-package tpi.solicitudes;
+package tpi.solicitudes.modelo;
 
 // Estados de una solicitud y a cuales puede pasar cada uno
 public enum Estado {

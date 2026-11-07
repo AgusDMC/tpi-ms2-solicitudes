@@ -19,6 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import tpi.solicitudes.modelo.Estado;
+import tpi.solicitudes.modelo.Prioridad;
+import tpi.solicitudes.modelo.TipoSolicitud;
 
 /**
  * Pruebas de caracterizacion de GestorSolicitudes sobre la version inicial (tag estado-inicial).

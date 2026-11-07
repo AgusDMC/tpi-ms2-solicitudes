@@ -1,4 +1,4 @@
-package tpi.solicitudes;
+package tpi.solicitudes.modelo;
 
 // Tipos de tramite que puede pedir un estudiante
 public enum TipoSolicitud {
