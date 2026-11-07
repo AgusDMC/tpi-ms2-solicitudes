@@ -7,6 +7,8 @@ import java.util.List;
 import tpi.solicitudes.modelo.Estado;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
+import tpi.solicitudes.modelo.Estudiante;
+import tpi.solicitudes.modelo.Responsable;
 
 // Clase principal del sistema: maneja todo
 public class GestorSolicitudes {
@@ -89,7 +91,7 @@ public class GestorSolicitudes {
     private Estudiante buscarOCrearEstudiante(String legajo, String nombre, String email, String carrera) {
         Estudiante estudiante = null;
         for (int i = 0; i < estudiantes.size(); i++) {
-            if (estudiantes.get(i).legajo.equals(legajo)) {
+            if (estudiantes.get(i).getLegajo().equals(legajo)) {
                 estudiante = estudiantes.get(i);
             }
         }
@@ -106,7 +108,7 @@ public class GestorSolicitudes {
             return false;
         }
         for (int i = 0; i < estudiantes.size(); i++) {
-            if (estudiantes.get(i).legajo.equals(legajo)) {
+            if (estudiantes.get(i).getLegajo().equals(legajo)) {
                 System.out.println("Error: el estudiante ya existe");
                 return false;
             }
@@ -161,7 +163,7 @@ public class GestorSolicitudes {
         }
         Responsable r = null;
         for (int i = 0; i < responsables.size(); i++) {
-            if (responsables.get(i).id == idResponsable) {
+            if (responsables.get(i).getId() == idResponsable) {
                 r = responsables.get(i);
             }
         }
@@ -186,9 +188,9 @@ public class GestorSolicitudes {
             } else if (campo.equals("prioridad")) {
                 if (s.prioridad.name().equalsIgnoreCase(valor)) res.add(s);
             } else if (campo.equals("legajo")) {
-                if (s.estudiante.legajo.equals(valor)) res.add(s);
+                if (s.estudiante.getLegajo().equals(valor)) res.add(s);
             } else if (campo.equals("responsable")) {
-                if (s.responsable != null && s.responsable.nombre.toLowerCase().contains(valor.toLowerCase())) res.add(s);
+                if (s.responsable != null && s.responsable.getNombre().toLowerCase().contains(valor.toLowerCase())) res.add(s);
             }
         }
         return res;
@@ -197,10 +199,10 @@ public class GestorSolicitudes {
     public String formatear(Solicitud s) {
         String resp = "Sin asignar";
         if (s.responsable != null) {
-            resp = s.responsable.nombre + " (" + s.responsable.area + ")";
+            resp = s.responsable.getNombre() + " (" + s.responsable.getArea() + ")";
         }
         return "#" + s.id + " | " + s.tipo + " | " + s.prioridad + " | " + s.estado
-                + " | " + s.estudiante.nombre + " (" + s.estudiante.legajo + ")"
+                + " | " + s.estudiante.getNombre() + " (" + s.estudiante.getLegajo() + ")"
                 + " | Resp: " + resp + " | Fecha: " + s.fecha + " | Limite: " + s.calcularFechaLimite();
     }
 

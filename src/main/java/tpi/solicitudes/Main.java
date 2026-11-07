@@ -2,6 +2,7 @@ package tpi.solicitudes;
 
 import java.util.List;
 import java.util.Scanner;
+import tpi.solicitudes.modelo.Responsable;
 
 public class Main {
 
@@ -64,7 +65,7 @@ public class Main {
                 System.out.print("Id de la solicitud: ");
                 int id = Integer.parseInt(sc.nextLine().trim());
                 for (Responsable r : g.responsables) {
-                    System.out.println(r.id + ". " + r.nombre + " - " + r.area);
+                    System.out.println(r.getId() + ". " + r.getNombre() + " - " + r.getArea());
                 }
                 System.out.print("Id del responsable: ");
                 int idr = Integer.parseInt(sc.nextLine().trim());

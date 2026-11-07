@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import tpi.solicitudes.modelo.Estado;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
+import tpi.solicitudes.modelo.Estudiante;
 
 /**
  * Pruebas de caracterizacion de GestorSolicitudes sobre la version inicial (tag estado-inicial).
@@ -90,8 +91,8 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(1, gestor.lista.size());
             Solicitud s = gestor.lista.get(0);
             assertEquals(1, s.id);
-            assertEquals("10234", s.estudiante.legajo);
-            assertEquals("Ana Perez", s.estudiante.nombre);
+            assertEquals("10234", s.estudiante.getLegajo());
+            assertEquals("Ana Perez", s.estudiante.getNombre());
             assertEquals(TipoSolicitud.CERTIFICADO, s.tipo);
             assertEquals(Prioridad.BAJA, s.prioridad);
             assertEquals("Certificado de alumno regular", s.descripcion);
@@ -127,10 +128,10 @@ class GestorSolicitudesCaracterizacionTest {
 
             assertEquals(1, gestor.estudiantes.size());
             Estudiante e = gestor.estudiantes.get(0);
-            assertEquals("20001", e.legajo);
-            assertEquals("Juan Gomez", e.nombre);
-            assertEquals("juan@mail.test", e.email);
-            assertEquals("TUP", e.carrera);
+            assertEquals("20001", e.getLegajo());
+            assertEquals("Juan Gomez", e.getNombre());
+            assertEquals("juan@mail.test", e.getEmail());
+            assertEquals("TUP", e.getCarrera());
         }
 
         @Test
@@ -143,8 +144,8 @@ class GestorSolicitudesCaracterizacionTest {
 
             assertEquals(1, gestor.estudiantes.size());
             assertSame(gestor.lista.get(0).estudiante, gestor.lista.get(1).estudiante);
-            assertEquals("Juan Gomez", gestor.lista.get(1).estudiante.nombre);
-            assertEquals("juan@mail.test", gestor.lista.get(1).estudiante.email);
+            assertEquals("Juan Gomez", gestor.lista.get(1).estudiante.getNombre());
+            assertEquals("juan@mail.test", gestor.lista.get(1).estudiante.getEmail());
         }
 
         @ParameterizedTest(name = "tipo {0}")
@@ -321,7 +322,7 @@ class GestorSolicitudesCaracterizacionTest {
         void registraEstudiante() {
             assertTrue(gestor.registrarEstudiante("10234", "Ana Perez", "ana@mail.test", "TUP"));
             assertEquals(1, gestor.estudiantes.size());
-            assertEquals("Ana Perez", gestor.estudiantes.get(0).nombre);
+            assertEquals("Ana Perez", gestor.estudiantes.get(0).getNombre());
         }
 
         @Test
@@ -354,9 +355,9 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.registrarResponsable("Martin Sosa", "Secretaria Academica", "academica@facultad.test");
 
             assertEquals(2, gestor.responsables.size());
-            assertEquals(1, gestor.responsables.get(0).id);
-            assertEquals(2, gestor.responsables.get(1).id);
-            assertEquals("Secretaria Academica", gestor.responsables.get(1).area);
+            assertEquals(1, gestor.responsables.get(0).getId());
+            assertEquals(2, gestor.responsables.get(1).getId());
+            assertEquals("Secretaria Academica", gestor.responsables.get(1).getArea());
         }
     }
 
@@ -536,7 +537,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("asigna un responsable existente a una solicitud PENDIENTE")
         void asignaResponsable() {
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals("Martin Sosa", buscarPorId(id).responsable.nombre);
+            assertEquals("Martin Sosa", buscarPorId(id).responsable.getNombre());
             assertEquals(Estado.PENDIENTE, buscarPorId(id).estado);
         }
 
@@ -546,7 +547,7 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.asignarResponsable(id, 1);
 
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals(2, buscarPorId(id).responsable.id);
+            assertEquals(2, buscarPorId(id).responsable.getId());
         }
 
         @ParameterizedTest(name = "en estado {0}")
@@ -561,7 +562,7 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(Estado.valueOf(estado), buscarPorId(id).estado);
 
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals(2, buscarPorId(id).responsable.id);
+            assertEquals(2, buscarPorId(id).responsable.getId());
         }
 
         @Test
@@ -573,7 +574,7 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(0, gestor.cambiarEstado(id, "CERRADA", ""));
 
             assertFalse(gestor.asignarResponsable(id, 2));
-            assertEquals(1, buscarPorId(id).responsable.id);
+            assertEquals(1, buscarPorId(id).responsable.getId());
         }
 
         @Test

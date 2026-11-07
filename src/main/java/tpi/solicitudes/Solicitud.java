@@ -5,6 +5,8 @@ import java.time.format.DateTimeFormatter;
 import tpi.solicitudes.modelo.Estado;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
+import tpi.solicitudes.modelo.Estudiante;
+import tpi.solicitudes.modelo.Responsable;
 
 public class Solicitud {
     public int id;
