@@ -9,6 +9,7 @@ import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Responsable;
+import tpi.solicitudes.modelo.Solicitud;
 
 // Clase principal del sistema: maneja todo
 public class GestorSolicitudes {
@@ -32,8 +33,8 @@ public class GestorSolicitudes {
         Solicitud s = new Solicitud(contador, estudiante, TipoSolicitud.valueOf(tipo), Prioridad.valueOf(prioridad), descripcion, fecha);
         lista.add(s);
         contador++;
-        System.out.println("Solicitud registrada con id " + s.id);
-        return s.id;
+        System.out.println("Solicitud registrada con id " + s.getId());
+        return s.getId();
     }
 
     private boolean datosEstudianteValidos(String legajo, String email) {
@@ -126,7 +127,7 @@ public class GestorSolicitudes {
     public int cambiarEstado(int id, String nuevo, String obs) {
         Solicitud s = null;
         for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).id == id) {
+            if (lista.get(i).getId() == id) {
                 s = lista.get(i);
             }
         }
@@ -134,15 +135,15 @@ public class GestorSolicitudes {
             return 1;
         }
         Estado destino = estadoDesde(nuevo);
-        if (destino == null || !s.estado.puedePasarA(destino)) {
+        if (destino == null || !s.getEstado().puedePasarA(destino)) {
             return 2;
         }
-        if (destino == Estado.EN_REVISION && s.responsable == null) {
+        if (destino == Estado.EN_REVISION && s.getResponsable() == null) {
             return 3;
         }
-        s.estado = destino;
+        s.setEstado(destino);
         if (obs != null && !obs.isEmpty()) {
-            s.observacion = obs;
+            s.setObservacion(obs);
         }
         return 0;
     }
@@ -157,7 +158,7 @@ public class GestorSolicitudes {
     public boolean asignarResponsable(int idSolicitud, int idResponsable) {
         Solicitud s = null;
         for (int i = 0; i < lista.size(); i++) {
-            if (lista.get(i).id == idSolicitud) {
+            if (lista.get(i).getId() == idSolicitud) {
                 s = lista.get(i);
             }
         }
@@ -170,10 +171,10 @@ public class GestorSolicitudes {
         if (s == null || r == null) {
             return false;
         }
-        if (s.estado == Estado.CERRADA) {
+        if (s.getEstado() == Estado.CERRADA) {
             return false;
         }
-        s.responsable = r;
+        s.setResponsable(r);
         return true;
     }
 
@@ -182,15 +183,15 @@ public class GestorSolicitudes {
         List<Solicitud> res = new ArrayList<>();
         for (Solicitud s : lista) {
             if (campo.equals("estado")) {
-                if (s.estado.name().equalsIgnoreCase(valor)) res.add(s);
+                if (s.getEstado().name().equalsIgnoreCase(valor)) res.add(s);
             } else if (campo.equals("tipo")) {
-                if (s.tipo.name().equalsIgnoreCase(valor)) res.add(s);
+                if (s.getTipo().name().equalsIgnoreCase(valor)) res.add(s);
             } else if (campo.equals("prioridad")) {
-                if (s.prioridad.name().equalsIgnoreCase(valor)) res.add(s);
+                if (s.getPrioridad().name().equalsIgnoreCase(valor)) res.add(s);
             } else if (campo.equals("legajo")) {
-                if (s.estudiante.getLegajo().equals(valor)) res.add(s);
+                if (s.getEstudiante().getLegajo().equals(valor)) res.add(s);
             } else if (campo.equals("responsable")) {
-                if (s.responsable != null && s.responsable.getNombre().toLowerCase().contains(valor.toLowerCase())) res.add(s);
+                if (s.getResponsable() != null && s.getResponsable().getNombre().toLowerCase().contains(valor.toLowerCase())) res.add(s);
             }
         }
         return res;
@@ -198,12 +199,12 @@ public class GestorSolicitudes {
 
     public String formatear(Solicitud s) {
         String resp = "Sin asignar";
-        if (s.responsable != null) {
-            resp = s.responsable.getNombre() + " (" + s.responsable.getArea() + ")";
+        if (s.getResponsable() != null) {
+            resp = s.getResponsable().getNombre() + " (" + s.getResponsable().getArea() + ")";
         }
-        return "#" + s.id + " | " + s.tipo + " | " + s.prioridad + " | " + s.estado
-                + " | " + s.estudiante.getNombre() + " (" + s.estudiante.getLegajo() + ")"
-                + " | Resp: " + resp + " | Fecha: " + s.fecha + " | Limite: " + s.calcularFechaLimite();
+        return "#" + s.getId() + " | " + s.getTipo() + " | " + s.getPrioridad() + " | " + s.getEstado()
+                + " | " + s.getEstudiante().getNombre() + " (" + s.getEstudiante().getLegajo() + ")"
+                + " | Resp: " + resp + " | Fecha: " + s.getFecha() + " | Limite: " + s.calcularFechaLimite();
     }
 
     // genera el reporte general
@@ -226,7 +227,7 @@ public class GestorSolicitudes {
         r += "\n--- Sin responsable asignado ---\n";
         int sin = 0;
         for (Solicitud s : lista) {
-            if (s.responsable == null && s.estado != Estado.CERRADA) {
+            if (s.getResponsable() == null && s.getEstado() != Estado.CERRADA) {
                 r += formatear(s) + "\n";
                 sin++;
             }
@@ -241,7 +242,7 @@ public class GestorSolicitudes {
     private int contarPorEstado(Estado estado) {
         int cantidad = 0;
         for (Solicitud solicitud : lista) {
-            if (solicitud.estado == estado) cantidad++;
+            if (solicitud.getEstado() == estado) cantidad++;
         }
         return cantidad;
     }
@@ -249,7 +250,7 @@ public class GestorSolicitudes {
     private int contarPorPrioridad(Prioridad prioridad) {
         int cantidad = 0;
         for (Solicitud solicitud : lista) {
-            if (solicitud.prioridad == prioridad) cantidad++;
+            if (solicitud.getPrioridad() == prioridad) cantidad++;
         }
         return cantidad;
     }
@@ -257,7 +258,7 @@ public class GestorSolicitudes {
     private int contarPorTipo(TipoSolicitud tipo) {
         int cantidad = 0;
         for (Solicitud solicitud : lista) {
-            if (solicitud.tipo == tipo) cantidad++;
+            if (solicitud.getTipo() == tipo) cantidad++;
         }
         return cantidad;
     }

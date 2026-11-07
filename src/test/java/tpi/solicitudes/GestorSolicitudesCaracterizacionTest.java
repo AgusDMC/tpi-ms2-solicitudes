@@ -23,6 +23,7 @@ import tpi.solicitudes.modelo.Estado;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
+import tpi.solicitudes.modelo.Solicitud;
 
 /**
  * Pruebas de caracterizacion de GestorSolicitudes sobre la version inicial (tag estado-inicial).
@@ -70,7 +71,7 @@ class GestorSolicitudesCaracterizacionTest {
 
     private Solicitud buscarPorId(int id) {
         for (Solicitud s : gestor.lista) {
-            if (s.id == id) {
+            if (s.getId() == id) {
                 return s;
             }
         }
@@ -90,16 +91,16 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(1, id);
             assertEquals(1, gestor.lista.size());
             Solicitud s = gestor.lista.get(0);
-            assertEquals(1, s.id);
-            assertEquals("10234", s.estudiante.getLegajo());
-            assertEquals("Ana Perez", s.estudiante.getNombre());
-            assertEquals(TipoSolicitud.CERTIFICADO, s.tipo);
-            assertEquals(Prioridad.BAJA, s.prioridad);
-            assertEquals("Certificado de alumno regular", s.descripcion);
-            assertEquals("03/11/2026", s.fecha);
-            assertEquals(Estado.PENDIENTE, s.estado);
-            assertNull(s.responsable);
-            assertNull(s.observacion);
+            assertEquals(1, s.getId());
+            assertEquals("10234", s.getEstudiante().getLegajo());
+            assertEquals("Ana Perez", s.getEstudiante().getNombre());
+            assertEquals(TipoSolicitud.CERTIFICADO, s.getTipo());
+            assertEquals(Prioridad.BAJA, s.getPrioridad());
+            assertEquals("Certificado de alumno regular", s.getDescripcion());
+            assertEquals("03/11/2026", s.getFecha());
+            assertEquals(Estado.PENDIENTE, s.getEstado());
+            assertNull(s.getResponsable());
+            assertNull(s.getObservacion());
             assertEquals("Solicitud registrada con id 1\n", consola());
         }
 
@@ -143,9 +144,9 @@ class GestorSolicitudesCaracterizacionTest {
                     "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026");
 
             assertEquals(1, gestor.estudiantes.size());
-            assertSame(gestor.lista.get(0).estudiante, gestor.lista.get(1).estudiante);
-            assertEquals("Juan Gomez", gestor.lista.get(1).estudiante.getNombre());
-            assertEquals("juan@mail.test", gestor.lista.get(1).estudiante.getEmail());
+            assertSame(gestor.lista.get(0).getEstudiante(), gestor.lista.get(1).getEstudiante());
+            assertEquals("Juan Gomez", gestor.lista.get(1).getEstudiante().getNombre());
+            assertEquals("juan@mail.test", gestor.lista.get(1).getEstudiante().getEmail());
         }
 
         @ParameterizedTest(name = "tipo {0}")
@@ -153,7 +154,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("acepta los cinco tipos validos")
         void aceptaTiposValidos(String tipo) {
             assertEquals(1, registrarValida("1001", tipo, "MEDIA", "01/11/2026"));
-            assertEquals(TipoSolicitud.valueOf(tipo), gestor.lista.get(0).tipo);
+            assertEquals(TipoSolicitud.valueOf(tipo), gestor.lista.get(0).getTipo());
         }
 
         @ParameterizedTest(name = "legajo de {0} caracteres")
@@ -185,7 +186,7 @@ class GestorSolicitudesCaracterizacionTest {
             int id = registrarValida("1001", "OTRO", "ALTA", "31/02/2026");
 
             assertEquals(1, id);
-            assertEquals("31/02/2026", gestor.lista.get(0).fecha);
+            assertEquals("31/02/2026", gestor.lista.get(0).getFecha());
         }
     }
 
@@ -386,7 +387,7 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.asignarResponsable(id, 1);
 
             assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", "obs"));
-            assertEquals(Estado.EN_REVISION, buscarPorId(id).estado);
+            assertEquals(Estado.EN_REVISION, buscarPorId(id).getEstado());
         }
 
         @Test
@@ -395,15 +396,15 @@ class GestorSolicitudesCaracterizacionTest {
             int sinResponsable = registrarValida("1002", "OTRO", "MEDIA", "01/11/2026");
 
             assertEquals(3, gestor.cambiarEstado(sinResponsable, "EN_REVISION", "obs"));
-            assertEquals(Estado.PENDIENTE, buscarPorId(sinResponsable).estado);
-            assertNull(buscarPorId(sinResponsable).observacion);
+            assertEquals(Estado.PENDIENTE, buscarPorId(sinResponsable).getEstado());
+            assertNull(buscarPorId(sinResponsable).getObservacion());
         }
 
         @Test
         @DisplayName("PENDIENTE -> APROBADA sin responsable devuelve 2 (la transicion se evalua antes)")
         void pendienteAAprobadaSinResponsable() {
             assertEquals(2, gestor.cambiarEstado(id, "APROBADA", ""));
-            assertEquals(Estado.PENDIENTE, buscarPorId(id).estado);
+            assertEquals(Estado.PENDIENTE, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "EN_REVISION -> {0}")
@@ -413,7 +414,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION");
 
             assertEquals(0, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(Estado.valueOf(destino), buscarPorId(id).estado);
+            assertEquals(Estado.valueOf(destino), buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "{0} -> CERRADA")
@@ -423,7 +424,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION", origen);
 
             assertEquals(0, gestor.cambiarEstado(id, "CERRADA", ""));
-            assertEquals(Estado.CERRADA, buscarPorId(id).estado);
+            assertEquals(Estado.CERRADA, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "PENDIENTE -> {0}")
@@ -433,8 +434,8 @@ class GestorSolicitudesCaracterizacionTest {
             assertTrue(gestor.asignarResponsable(id, 1));
 
             assertEquals(2, gestor.cambiarEstado(id, destino, "obs"));
-            assertEquals(Estado.PENDIENTE, buscarPorId(id).estado);
-            assertNull(buscarPorId(id).observacion);
+            assertEquals(Estado.PENDIENTE, buscarPorId(id).getEstado());
+            assertNull(buscarPorId(id).getObservacion());
         }
 
         @ParameterizedTest(name = "EN_REVISION -> {0}")
@@ -444,7 +445,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION");
 
             assertEquals(2, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(Estado.EN_REVISION, buscarPorId(id).estado);
+            assertEquals(Estado.EN_REVISION, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "APROBADA -> {0}")
@@ -454,7 +455,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION", "APROBADA");
 
             assertEquals(2, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(Estado.APROBADA, buscarPorId(id).estado);
+            assertEquals(Estado.APROBADA, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "RECHAZADA -> {0}")
@@ -464,7 +465,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION", "RECHAZADA");
 
             assertEquals(2, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(Estado.RECHAZADA, buscarPorId(id).estado);
+            assertEquals(Estado.RECHAZADA, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "CERRADA -> {0}")
@@ -474,7 +475,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION", "APROBADA", "CERRADA");
 
             assertEquals(2, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(Estado.CERRADA, buscarPorId(id).estado);
+            assertEquals(Estado.CERRADA, buscarPorId(id).getEstado());
         }
 
         @Test
@@ -490,7 +491,7 @@ class GestorSolicitudesCaracterizacionTest {
 
             gestor.cambiarEstado(id, "EN_REVISION", "Se pidio el programa analitico");
 
-            assertEquals("Se pidio el programa analitico", buscarPorId(id).observacion);
+            assertEquals("Se pidio el programa analitico", buscarPorId(id).getObservacion());
         }
 
         @Test
@@ -500,10 +501,10 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", "Primera"));
 
             assertEquals(0, gestor.cambiarEstado(id, "APROBADA", ""));
-            assertEquals("Primera", buscarPorId(id).observacion);
+            assertEquals("Primera", buscarPorId(id).getObservacion());
 
             assertEquals(0, gestor.cambiarEstado(id, "CERRADA", null));
-            assertEquals("Primera", buscarPorId(id).observacion);
+            assertEquals("Primera", buscarPorId(id).getObservacion());
         }
 
         @Test
@@ -537,8 +538,8 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("asigna un responsable existente a una solicitud PENDIENTE")
         void asignaResponsable() {
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals("Martin Sosa", buscarPorId(id).responsable.getNombre());
-            assertEquals(Estado.PENDIENTE, buscarPorId(id).estado);
+            assertEquals("Martin Sosa", buscarPorId(id).getResponsable().getNombre());
+            assertEquals(Estado.PENDIENTE, buscarPorId(id).getEstado());
         }
 
         @Test
@@ -547,7 +548,7 @@ class GestorSolicitudesCaracterizacionTest {
             gestor.asignarResponsable(id, 1);
 
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals(2, buscarPorId(id).responsable.getId());
+            assertEquals(2, buscarPorId(id).getResponsable().getId());
         }
 
         @ParameterizedTest(name = "en estado {0}")
@@ -559,10 +560,10 @@ class GestorSolicitudesCaracterizacionTest {
             if (!estado.equals("EN_REVISION")) {
                 assertEquals(0, gestor.cambiarEstado(id, estado, ""));
             }
-            assertEquals(Estado.valueOf(estado), buscarPorId(id).estado);
+            assertEquals(Estado.valueOf(estado), buscarPorId(id).getEstado());
 
             assertTrue(gestor.asignarResponsable(id, 2));
-            assertEquals(2, buscarPorId(id).responsable.getId());
+            assertEquals(2, buscarPorId(id).getResponsable().getId());
         }
 
         @Test
@@ -574,7 +575,7 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(0, gestor.cambiarEstado(id, "CERRADA", ""));
 
             assertFalse(gestor.asignarResponsable(id, 2));
-            assertEquals(1, buscarPorId(id).responsable.getId());
+            assertEquals(1, buscarPorId(id).getResponsable().getId());
         }
 
         @Test
@@ -587,7 +588,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("rechaza un responsable inexistente y deja la solicitud sin responsable")
         void rechazaResponsableInexistente() {
             assertFalse(gestor.asignarResponsable(id, 99));
-            assertNull(buscarPorId(id).responsable);
+            assertNull(buscarPorId(id).getResponsable());
         }
     }
 
@@ -631,7 +632,7 @@ class GestorSolicitudesCaracterizacionTest {
         }
 
         private List<Integer> ids(List<Solicitud> resultado) {
-            return resultado.stream().map(s -> s.id).toList();
+            return resultado.stream().map(s -> s.getId()).toList();
         }
 
         @Test
@@ -704,13 +705,13 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("deja las solicitudes en los estados y observaciones esperados")
         void estadosYObservaciones() {
-            assertEquals(Estado.PENDIENTE, buscarPorId(1).estado);
-            assertEquals(Estado.EN_REVISION, buscarPorId(2).estado);
-            assertEquals(Estado.APROBADA, buscarPorId(3).estado);
-            assertEquals(Estado.PENDIENTE, buscarPorId(4).estado);
-            assertEquals("Se pidio el programa analitico", buscarPorId(2).observacion);
-            assertEquals("Se corrigio la nota", buscarPorId(3).observacion);
-            assertNull(buscarPorId(1).observacion);
+            assertEquals(Estado.PENDIENTE, buscarPorId(1).getEstado());
+            assertEquals(Estado.EN_REVISION, buscarPorId(2).getEstado());
+            assertEquals(Estado.APROBADA, buscarPorId(3).getEstado());
+            assertEquals(Estado.PENDIENTE, buscarPorId(4).getEstado());
+            assertEquals("Se pidio el programa analitico", buscarPorId(2).getObservacion());
+            assertEquals("Se corrigio la nota", buscarPorId(3).getObservacion());
+            assertNull(buscarPorId(1).getObservacion());
         }
 
         @Test

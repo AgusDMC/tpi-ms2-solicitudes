@@ -3,6 +3,7 @@ package tpi.solicitudes;
 import java.util.List;
 import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
+import tpi.solicitudes.modelo.Solicitud;
 
 public class Main {
 
