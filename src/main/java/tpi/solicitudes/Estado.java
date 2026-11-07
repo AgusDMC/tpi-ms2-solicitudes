@@ -1,10 +1,19 @@
 package tpi.solicitudes;
 
-// Estados posibles de una solicitud
-public class Estado {
-    public static final String PENDIENTE = "PENDIENTE";
-    public static final String EN_REVISION = "EN_REVISION";
-    public static final String APROBADA = "APROBADA";
-    public static final String RECHAZADA = "RECHAZADA";
-    public static final String CERRADA = "CERRADA";
+// Estados de una solicitud y a cuales puede pasar cada uno
+public enum Estado {
+    PENDIENTE,
+    EN_REVISION,
+    APROBADA,
+    RECHAZADA,
+    CERRADA;
+
+    public boolean puedePasarA(Estado destino) {
+        return switch (this) {
+            case PENDIENTE -> destino == EN_REVISION;
+            case EN_REVISION -> destino == APROBADA || destino == RECHAZADA;
+            case APROBADA, RECHAZADA -> destino == CERRADA;
+            case CERRADA -> false;
+        };
+    }
 }

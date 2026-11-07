@@ -89,8 +89,8 @@ class GestorSolicitudesCaracterizacionTest {
             assertEquals(1, s.id);
             assertEquals("10234", s.estudiante.legajo);
             assertEquals("Ana Perez", s.estudiante.nombre);
-            assertEquals("CERTIFICADO", s.tipo);
-            assertEquals("BAJA", s.prioridad);
+            assertEquals(TipoSolicitud.CERTIFICADO, s.tipo);
+            assertEquals(Prioridad.BAJA, s.prioridad);
             assertEquals("Certificado de alumno regular", s.descripcion);
             assertEquals("03/11/2026", s.fecha);
             assertEquals(Estado.PENDIENTE, s.estado);
@@ -149,7 +149,7 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("acepta los cinco tipos validos")
         void aceptaTiposValidos(String tipo) {
             assertEquals(1, registrarValida("1001", tipo, "MEDIA", "01/11/2026"));
-            assertEquals(tipo, gestor.lista.get(0).tipo);
+            assertEquals(TipoSolicitud.valueOf(tipo), gestor.lista.get(0).tipo);
         }
 
         @ParameterizedTest(name = "legajo de {0} caracteres")
@@ -409,7 +409,7 @@ class GestorSolicitudesCaracterizacionTest {
             llevarA("EN_REVISION");
 
             assertEquals(0, gestor.cambiarEstado(id, destino, ""));
-            assertEquals(destino, buscarPorId(id).estado);
+            assertEquals(Estado.valueOf(destino), buscarPorId(id).estado);
         }
 
         @ParameterizedTest(name = "{0} -> CERRADA")
@@ -555,7 +555,7 @@ class GestorSolicitudesCaracterizacionTest {
             if (!estado.equals("EN_REVISION")) {
                 assertEquals(0, gestor.cambiarEstado(id, estado, ""));
             }
-            assertEquals(estado, buscarPorId(id).estado);
+            assertEquals(Estado.valueOf(estado), buscarPorId(id).estado);
 
             assertTrue(gestor.asignarResponsable(id, 2));
             assertEquals(2, buscarPorId(id).responsable.id);

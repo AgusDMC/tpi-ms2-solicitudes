@@ -6,15 +6,15 @@ import java.time.format.DateTimeFormatter;
 public class Solicitud {
     public int id;
     public Estudiante estudiante;
-    public String tipo;
-    public String prioridad;
+    public TipoSolicitud tipo;
+    public Prioridad prioridad;
     public String descripcion;
     public String fecha; // dd/MM/yyyy
-    public String estado;
+    public Estado estado;
     public Responsable responsable;
     public String observacion;
 
-    public Solicitud(int id, Estudiante estudiante, String tipo, String prioridad, String descripcion, String fecha) {
+    public Solicitud(int id, Estudiante estudiante, TipoSolicitud tipo, Prioridad prioridad, String descripcion, String fecha) {
         this.id = id;
         this.estudiante = estudiante;
         this.tipo = tipo;
@@ -26,15 +26,7 @@ public class Solicitud {
 
     // calcula la fecha limite de respuesta segun la prioridad
     public String calcularFechaLimite() {
-        int diasRespuesta = 0;
-        if (prioridad.equals("ALTA")) {
-            diasRespuesta = 3;
-        } else if (prioridad.equals("MEDIA")) {
-            diasRespuesta = 7;
-        } else if (prioridad.equals("BAJA")) {
-            diasRespuesta = 15;
-        }
         LocalDate fechaInicio = LocalDate.parse(fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        return fechaInicio.plusDays(diasRespuesta).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        return fechaInicio.plusDays(prioridad.getDiasRespuesta()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 }
