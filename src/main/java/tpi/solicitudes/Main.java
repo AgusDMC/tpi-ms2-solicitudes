@@ -5,11 +5,12 @@ import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 public class Main {
 
     public static void main(String[] args) {
-        GestorSolicitudes g = new GestorSolicitudes(new RepositorioEnMemoria());
+        GestorSolicitudes g = new GestorSolicitudes(new RepositorioEnMemoria(), new ValidadorSolicitud());
         g.cargarDatosEjemplo();
         Scanner sc = new Scanner(System.in);
         int op = -1;

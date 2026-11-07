@@ -25,6 +25,7 @@ import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 /**
  * Pruebas de caracterizacion de GestorSolicitudes sobre la version inicial (tag estado-inicial).
@@ -43,7 +44,7 @@ class GestorSolicitudesCaracterizacionTest {
     @BeforeEach
     void setUp() {
         repositorio = new RepositorioEnMemoria();
-        gestor = new GestorSolicitudes(repositorio);
+        gestor = new GestorSolicitudes(repositorio, new ValidadorSolicitud());
         salidaOriginal = System.out;
         salida = new ByteArrayOutputStream();
         System.setOut(new PrintStream(salida, true));

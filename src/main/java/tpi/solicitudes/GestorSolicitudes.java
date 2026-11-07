@@ -1,7 +1,5 @@
 package tpi.solicitudes;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import tpi.solicitudes.modelo.Estado;
@@ -11,15 +9,18 @@ import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.SolicitudRepository;
+import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 // Clase principal del sistema: maneja todo
 public class GestorSolicitudes {
 
     private final SolicitudRepository repositorio;
+    private final ValidadorSolicitud validador;
     int contador = 1;
 
-    public GestorSolicitudes(SolicitudRepository repositorio) {
+    public GestorSolicitudes(SolicitudRepository repositorio, ValidadorSolicitud validador) {
         this.repositorio = repositorio;
+        this.validador = validador;
     }
 
     public List<Solicitud> listarSolicitudes() {
@@ -33,10 +34,10 @@ public class GestorSolicitudes {
     // registra una solicitud nueva. Devuelve el id o -1 si hubo error
     public int registrarSolicitud(String legajo, String nombre, String email, String carrera,
                                   String tipo, String prioridad, String descripcion, String fecha) {
-        if (!datosEstudianteValidos(legajo, email)) {
+        if (!validador.datosEstudianteValidos(legajo, email)) {
             return -1;
         }
-        if (!datosSolicitudValidos(tipo, prioridad, descripcion, fecha)) {
+        if (!validador.datosSolicitudValidos(tipo, prioridad, descripcion, fecha)) {
             return -1;
         }
         Estudiante estudiante = buscarOCrearEstudiante(legajo, nombre, email, carrera);
@@ -46,58 +47,6 @@ public class GestorSolicitudes {
         contador++;
         System.out.println("Solicitud registrada con id " + s.getId());
         return s.getId();
-    }
-
-    private boolean datosEstudianteValidos(String legajo, String email) {
-        if (legajo == null || legajo.trim().isEmpty()) {
-            System.out.println("Error: legajo vacio");
-            return false;
-        }
-        if (legajo.length() < 4 || legajo.length() > 8) {
-            System.out.println("Error: legajo invalido");
-            return false;
-        }
-        if (email == null || !email.contains("@") || !email.contains(".")) {
-            System.out.println("Error: email invalido");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean datosSolicitudValidos(String tipo, String prioridad, String descripcion, String fecha) {
-        if (!esTipoValido(tipo)) {
-            System.out.println("Error: tipo invalido");
-            return false;
-        }
-        if (!esPrioridadValida(prioridad)) {
-            System.out.println("Error: prioridad invalida");
-            return false;
-        }
-        if (descripcion == null || descripcion.trim().length() < 10) {
-            System.out.println("Error: la descripcion debe tener al menos 10 caracteres");
-            return false;
-        }
-        try {
-            LocalDate.parse(fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        } catch (Exception e) {
-            System.out.println("Error: fecha invalida");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean esTipoValido(String tipo) {
-        for (TipoSolicitud valor : TipoSolicitud.values()) {
-            if (tipo.equals(valor.name())) return true;
-        }
-        return false;
-    }
-
-    private boolean esPrioridadValida(String prioridad) {
-        for (Prioridad valor : Prioridad.values()) {
-            if (prioridad.equals(valor.name())) return true;
-        }
-        return false;
     }
 
     private Estudiante buscarOCrearEstudiante(String legajo, String nombre, String email, String carrera) {
@@ -111,7 +60,7 @@ public class GestorSolicitudes {
 
     // registra un estudiante suelto (se usa en la carga inicial)
     public boolean registrarEstudiante(String legajo, String nombre, String email, String carrera) {
-        if (!datosEstudianteValidos(legajo, email)) {
+        if (!validador.datosEstudianteValidos(legajo, email)) {
             return false;
         }
         if (repositorio.buscarEstudiantePorLegajo(legajo) != null) {
