@@ -58,13 +58,31 @@ git checkout estado-refactorizado
 ## Estructura del repositorio
 
 ```
-src/main/java/tpi/solicitudes/   código fuente
-src/test/java/tpi/solicitudes/   pruebas
-docs/                            documentación del TPI
-  evidencias/                    capturas por etapa
-  decisiones/                    decisiones técnicas (ADR)
-  code-review/                   checklist y observaciones de la revisión
+src/main/java/tpi/solicitudes/
+  Main.java                 arma las dependencias y arranca la consola
+  ui/                       MenuConsola: entrada y salida por consola, un método por opción
+  modelo/                   Solicitud, Estudiante, Responsable, enums Estado, TipoSolicitud y Prioridad,
+                            y SolicitudRequest (Parameter Object)
+  servicio/                 SolicitudService (reglas de negocio), ValidadorSolicitud y ReporteService
+  repositorio/              interfaz SolicitudRepository y su implementación RepositorioEnMemoria
+  excepciones/              DatosInvalidosException, SolicitudNoEncontradaException, TransicionInvalidaException
+  datos/                    DatosEjemplo: carga los datos sintéticos de ejemplo
+src/test/java/tpi/solicitudes/
+  GestorSolicitudesCaracterizacionTest.java   pruebas de caracterización (antes/después)
+  modelo/, ui/                                pruebas del Parameter Object y de la consola
+docs/
+  diagnostico-code-smells.md   Etapa 3: deuda técnica y code smells
+  decisiones/                  decisiones técnicas (ADR-001 y ADR-002)
+  code-review/                 checklist y observaciones de la revisión (Etapa 7)
+  evidencias/etapa1 … etapa7/  capturas de cada etapa
 ```
+
+## Resultado del refactoring
+
+- `GestorSolicitudes`, que concentraba 8 responsabilidades, quedó dividido en capas (SRP y DIP, ver `docs/decisiones/ADR-002-separacion-en-capas.md`).
+- Refactorings aplicados: Extract Method, Move Method, Replace Type Code with Enum, Introduce Parameter Object y Replace Error Code with Exception.
+- La misma suite de pruebas de caracterización corre en verde sobre la versión inicial y sobre la refactorizada: el comportamiento externo se mantiene.
+- Se corrigieron tres fallas visibles de la versión inicial: el programa ya no se cierra si el id no es numérico, el menú ya no repite la opción anterior ante una entrada inválida y el error de transición indica qué estados están permitidos.
 
 ## Tags del repositorio
 
