@@ -22,8 +22,11 @@ Registro de las observaciones realizadas al aplicar el [checklist](checklist.md)
 | #6 | docs: ADR-002 separación en capas y diagrama de clases inicial | Amira Esper | Nahuel Dugo | Solo documentación, sin conflictos | Aprobado y mergeado | `11` |
 | #2 | docs: checklist de code review | Nahuel Dugo | Agustín Echeverría | Solo documentación | Aprobado y mergeado | Comentario de aprobación en el PR |
 | #10 | refactor: separación en capas (SOLID) | Amira Esper | Nahuel Dugo | Combinado con `main`: 113 tests en verde. Además se ejecutó el programa: el listado y el reporte coinciden con la versión inicial | Aprobado y mergeado | `12`, `13`, `14` |
+| #9 | docs: diagnóstico de code smells y deuda técnica (Etapa 3) | Nahuel Dugo | Agustín Echeverría | Solo documentación; se verificó que cada smell tenga su captura | Aprobado y mergeado | `15` |
+| #13 (incluye #12) | refactor: Introduce Parameter Object y Replace Error Code with Exception | Manuel Da Corta | Agustín Echeverría | Combinado con `main`: 130 tests en verde. Se ejecutó el programa con la misma secuencia que la versión inicial: misma salida, salvo los 3 bugs acordados, que quedaron corregidos | Aprobado y mergeado | `16` |
+| #8 | docs: observaciones del code review | Nahuel Dugo | Agustín Echeverría | Solo documentación | Aprobado y mergeado | Comentario de aprobación en el PR |
 
-Las revisiones de los PRs #1 a #7 se realizaron el 07/11/2026, y la del PR #10, el 08/11/2026. Las capturas están en [`docs/evidencias/etapa7/`](../evidencias/etapa7/).
+Las revisiones de los PRs #1 a #7 se realizaron el 07/11/2026, y las de los PRs #8, #9 y #13, el 08/11/2026. Los PRs de Nahuel Dugo (#8 y #9) los revisó Agustín Echeverría, y también el #13, porque Nahuel no estaba disponible en ese momento. Las capturas están en [`docs/evidencias/etapa7/`](../evidencias/etapa7/).
 
 ---
 
@@ -31,23 +34,25 @@ Las revisiones de los PRs #1 a #7 se realizaron el 07/11/2026, y la del PR #10, 
 
 | PR | Observación | Categoría (ítem del checklist) | Acción correctiva | Estado |
 |---|---|---|---|---|
-| #5 | Los tests no marcan las etapas Arrange, Act y Assert, que la consigna pide explícitamente. | Pruebas (5.4) | Marcar las tres etapas con comentarios, al menos en tests representativos. | Pendiente |
-| #5 | Los tests leen atributos públicos (`gestor.lista`, `s.estado`) y comparan los mensajes exactos de consola, por lo que van a tener que adaptarse al encapsular atributos y reemplazar los códigos de error por excepciones. | Pruebas (5.3) | Al adaptarlos, dejar registrado qué se cambió en cada test, para demostrar que sigue verificando lo mismo. | Pendiente |
+| #5 | Los tests no marcan las etapas Arrange, Act y Assert, que la consigna pide explícitamente. | Pruebas (5.4) | Marcar las tres etapas con comentarios, al menos en tests representativos. | Mejora futura |
+| #5 | Los tests leen atributos públicos (`gestor.lista`, `s.estado`) y comparan los mensajes exactos de consola, por lo que van a tener que adaptarse al encapsular atributos y reemplazar los códigos de error por excepciones. | Pruebas (5.3) | Al adaptarlos, dejar registrado qué se cambió en cada test, para demostrar que sigue verificando lo mismo. | Corregido: las adaptaciones quedaron registradas en los PRs #7, #10 y #13 |
 | #5 | Se encontraron dos defectos que ya existían en la versión inicial: se acepta `31/02/2026` como fecha válida, y un tipo o una prioridad `null` lanzan `NullPointerException`. | Lógica (1.5) | Incorporarlos al diagnóstico de la Etapa 3. Los tests los fijan como comportamiento actual. | Corregido (registrados en el diagnóstico) |
 | #1 | `contarPorEstado`, `contarPorPrioridad` y `contarPorTipo` repiten el mismo bucle y solo cambia el campo comparado. | Diseño, DRY (3.5) | Unificarlos con un único método o con streams una vez que existan los enums. | Mejora futura |
 | #1 | `if` sin llaves (`if (...) cantidad++;`). | Legibilidad (2.2) | Usar llaves siempre, para evitar errores al agregar líneas. | Mejora futura |
-| #3 | Las validaciones siguen imprimiendo con `System.out`, y la de la fecha usa `catch (Exception e)` genérico. | Diseño, SRP (3.1) y errores (4.3) | Mover las validaciones a `ValidadorSolicitud` y usar excepciones específicas (`DateTimeParseException`, `DatosInvalidosException`). | Pendiente (Persona 4) |
+| #3 | Las validaciones siguen imprimiendo con `System.out`, y la de la fecha usa `catch (Exception e)` genérico. | Diseño, SRP (3.1) y errores (4.3) | Mover las validaciones a `ValidadorSolicitud` y usar excepciones específicas (`DateTimeParseException`, `DatosInvalidosException`). | Corregido en parte en el PR #13: las validaciones lanzan `DatosInvalidosException`. Queda el `catch (Exception e)` de la fecha (ver fila del PR #13) |
 | #3 | `buscarOCrearEstudiante` sigue recorriendo la lista después de encontrar al estudiante. | Rendimiento (7.1) | Devolver el estudiante dentro del `if`. | Mejora futura |
 | #4 | Los días 3, 7 y 15 siguen escritos en el método (números mágicos). | Legibilidad (2.3) | Moverlos al enum `Prioridad` con `getDiasRespuesta()`. | Corregido en el PR #7 |
-| #4 | El formato `"dd/MM/yyyy"` se repite y el `DateTimeFormatter` se crea dos veces en cada llamada. | Rendimiento (7.2) | Definir una constante `FORMATO_FECHA`. | Pendiente |
+| #4 | El formato `"dd/MM/yyyy"` se repite y el `DateTimeFormatter` se crea dos veces en cada llamada. | Rendimiento (7.2) | Definir una constante `FORMATO_FECHA`. | Mejora futura |
 | #7 | Un mismo commit aplica dos refactorings: Replace Type Code with Enum y la regla OCP de las transiciones de estado. | Proceso (8.1 y 8.2) | Separar cada refactoring en su commit, como acordó el grupo. | Mejora futura (proceso) |
 | #7 | La rama incluía merges de otras ramas (`extract-method`, `move-method` y `test/caracterizacion`) antes de que entraran a `main`. Cuando esas ramas se integraron por su lado, GitHub detectó conflictos en `GestorSolicitudes.java` y en el archivo de tests, y no permitió el merge. | Proceso (8.1 y 8.4) | La combinación con `main` se resolvió localmente sin conflictos reales, se verificó con los 113 tests y se subió a la rama del PR (commit "merge temporal para revisar"). Para los próximos PRs: crear cada rama desde el `main` actualizado y no mezclar otras ramas de trabajo. | Corregido |
 | #7 | `esTipoValido`, `esPrioridadValida` y `estadoDesde` son tres bucles casi iguales. | Diseño, DRY (3.5) | Unificarlos en un único método genérico que reciba el enum. | Mejora futura |
 | #6 | El diagrama de clases agregado corresponde al sistema inicial. | Proceso (8.5) | Agregar el diagrama final cuando esté terminada la separación en capas. | Corregido en el PR #10 |
 | #10 | `SolicitudRepository` tiene 9 métodos para solicitudes, estudiantes y responsables, pero `ReporteService` solo usa `listarSolicitudes()`. | Diseño, ISP (3.3) | Separar la interfaz en interfaces más chicas, para que cada servicio dependa solo de lo que usa. | Mejora futura |
-| #10 | `SolicitudService` y `ValidadorSolicitud` siguen imprimiendo con `System.out`. | Diseño, SRP (3.1) | Informar los errores con excepciones y que los muestre `MenuConsola`. | Pendiente (PR de excepciones) |
-| #10 | `MenuConsola` mantiene el `catch` vacío del menú y los `Integer.parseInt` sin manejo de las opciones 2 y 3, así que los bugs conocidos siguen presentes. | Manejo de errores (4.2 y 4.5) | Corregirlos en el PR de excepciones. | Pendiente (PR de excepciones) |
+| #10 | `SolicitudService` y `ValidadorSolicitud` siguen imprimiendo con `System.out`. | Diseño, SRP (3.1) | Informar los errores con excepciones y que los muestre `MenuConsola`. | Corregido en parte en el PR #13 (ver fila del PR #13) |
+| #10 | `MenuConsola` mantiene el `catch` vacío del menú y los `Integer.parseInt` sin manejo de las opciones 2 y 3, así que los bugs conocidos siguen presentes. | Manejo de errores (4.2 y 4.5) | Corregirlos en el PR de excepciones. | Corregido en el PR #13 |
 | #10 | La clase de test se sigue llamando `GestorSolicitudesCaracterizacionTest` y la variable `gestor` ahora es un `SolicitudService`, aunque `GestorSolicitudes` ya no existe. | Legibilidad (2.1) | Renombrar la clase y la variable para que reflejen el diseño nuevo. | Mejora futura |
+| #13 | `SolicitudService` todavía imprime con `System.out` al registrar una solicitud (líneas 48, 66 y 70). | Diseño, SRP (3.1) | Que el servicio solo devuelva el resultado o lance la excepción, y que `MenuConsola` muestre el mensaje. | Mejora futura |
+| #13 | `ValidadorSolicitud.validarFecha` sigue usando `catch (Exception e)` genérico. | Manejo de errores (4.3) | Capturar `DateTimeParseException`. | Mejora futura |
 
 ---
 
@@ -59,3 +64,5 @@ Las revisiones de los PRs #1 a #7 se realizaron el 07/11/2026, y la del PR #10, 
 - **#7:** `cambiarEstado` pasa de una cadena de `if/else` a usar `Estado.puedePasarA()` (OCP), y los tests se adaptaron en solo 4 líneas sin cambiar lo que verifican.
 - **#6:** el ADR registra alternativas descartadas y consecuencias negativas, lo que muestra que la decisión fue evaluada.
 - **#10:** aplica SRP y DIP según el ADR-002: `GestorSolicitudes`, con 8 responsabilidades, queda dividido en clases con una responsabilidad cada una, y los servicios reciben la interfaz `SolicitudRepository` por constructor. Cada paso tiene su propio commit, y los tests se adaptaron sin cambiar lo que verifican (69 aserciones antes y 69 después).
+- **#9:** 12 smells documentados (la consigna pide 8), cada uno con ubicación, impacto, riesgo, prioridad y captura, y la deuda técnica explicada con ejemplos concretos del sistema.
+- **#13:** corrige los 3 bugs visibles de la versión inicial (el programa ya no se cierra con un id no numérico, el menú ya no repite la opción anterior y el error de transición indica los estados permitidos), y agrega tests de la consola y del Parameter Object (de 113 a 130 tests, todos en verde).
