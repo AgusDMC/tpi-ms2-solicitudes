@@ -24,6 +24,7 @@ import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.modelo.SolicitudRequest;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
 import tpi.solicitudes.datos.DatosEjemplo;
 import tpi.solicitudes.servicio.ReporteService;
@@ -65,8 +66,8 @@ class GestorSolicitudesCaracterizacionTest {
     }
 
     private int registrarValida(String legajo, String tipo, String prioridad, String fecha) {
-        return gestor.registrarSolicitud(legajo, "Nombre Prueba", "prueba@mail.test", "TUP",
-                tipo, prioridad, DESCRIPCION_VALIDA, fecha);
+        return gestor.registrarSolicitud(new SolicitudRequest(legajo, "Nombre Prueba", "prueba@mail.test", "TUP",
+                tipo, prioridad, DESCRIPCION_VALIDA, fecha));
     }
 
     // Lee la fecha limite desde formatear(), que existe antes y despues de Move Method.
@@ -94,8 +95,8 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("una solicitud valida se registra con id 1, estado PENDIENTE y sin responsable")
         void registraSolicitudValida() {
-            int id = gestor.registrarSolicitud("10234", "Ana Perez", "ana.perez@mail.test", "TUP",
-                    "CERTIFICADO", "BAJA", "Certificado de alumno regular", "03/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("10234", "Ana Perez", "ana.perez@mail.test", "TUP",
+                    "CERTIFICADO", "BAJA", "Certificado de alumno regular", "03/11/2026"));
 
             assertEquals(1, id);
             assertEquals(1, repositorio.listarSolicitudes().size());
@@ -133,8 +134,8 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("crea el estudiante si no existe")
         void creaEstudianteNuevo() {
-            gestor.registrarSolicitud("20001", "Juan Gomez", "juan@mail.test", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Juan Gomez", "juan@mail.test", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
 
             assertEquals(1, repositorio.listarEstudiantes().size());
             Estudiante e = repositorio.listarEstudiantes().get(0);
@@ -145,12 +146,30 @@ class GestorSolicitudesCaracterizacionTest {
         }
 
         @Test
+        @DisplayName("toma cada dato del request para el estudiante nuevo y la solicitud")
+        void usaCadaCampoDelRequest() {
+            gestor.registrarSolicitud(new SolicitudRequest("30003", "Lucia Ramos", "lucia@mail.test", "LIC",
+                    "EQUIVALENCIA", "ALTA", "Equivalencia de Matematica Discreta", "05/11/2026"));
+
+            Solicitud s = gestor.listarSolicitudes().get(0);
+            Estudiante e = s.getEstudiante();
+            assertEquals("30003", e.getLegajo());
+            assertEquals("Lucia Ramos", e.getNombre());
+            assertEquals("lucia@mail.test", e.getEmail());
+            assertEquals("LIC", e.getCarrera());
+            assertEquals(TipoSolicitud.EQUIVALENCIA, s.getTipo());
+            assertEquals(Prioridad.ALTA, s.getPrioridad());
+            assertEquals("Equivalencia de Matematica Discreta", s.getDescripcion());
+            assertEquals("05/11/2026", s.getFecha());
+        }
+
+        @Test
         @DisplayName("reutiliza el estudiante existente sin actualizar sus datos")
         void reutilizaEstudianteExistente() {
-            gestor.registrarSolicitud("20001", "Juan Gomez", "juan@mail.test", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
-            gestor.registrarSolicitud("20001", "Otro Nombre", "otro@mail.test", "LIC",
-                    "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026");
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Juan Gomez", "juan@mail.test", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Otro Nombre", "otro@mail.test", "LIC",
+                    "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026"));
 
             assertEquals(1, repositorio.listarEstudiantes().size());
             assertSame(repositorio.listarSolicitudes().get(0).getEstudiante(), repositorio.listarSolicitudes().get(1).getEstudiante());
@@ -176,16 +195,16 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("acepta una descripcion de exactamente 10 caracteres")
         void aceptaDescripcionDeDiezCaracteres() {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", "0123456789", "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", "0123456789", "01/11/2026"));
             assertEquals(1, id);
         }
 
         @Test
         @DisplayName("acepta un email con solo '@' y '.' en cualquier posicion")
         void aceptaEmailMinimo() {
-            int id = gestor.registrarSolicitud("1001", "N", "a.b@c", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a.b@c", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
             assertEquals(1, id);
         }
 
@@ -237,16 +256,16 @@ class GestorSolicitudesCaracterizacionTest {
         @ValueSource(strings = {"", "ana.perez.mail.test", "ana@mailtest"})
         @DisplayName("rechaza email sin '@' o sin '.'")
         void rechazaEmailInvalido(String email) {
-            int id = gestor.registrarSolicitud("1001", "N", email, "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", email, "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
             assertRechazado(id, "Error: email invalido");
         }
 
         @Test
         @DisplayName("rechaza email nulo")
         void rechazaEmailNulo() {
-            int id = gestor.registrarSolicitud("1001", "N", null, "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", null, "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
             assertRechazado(id, "Error: email invalido");
         }
 
@@ -270,16 +289,16 @@ class GestorSolicitudesCaracterizacionTest {
         @ValueSource(strings = {"", "012345678", "   012345678   "})
         @DisplayName("rechaza descripcion con menos de 10 caracteres sin contar espacios extremos")
         void rechazaDescripcionCorta(String descripcion) {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", descripcion, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", descripcion, "01/11/2026"));
             assertRechazado(id, "Error: la descripcion debe tener al menos 10 caracteres");
         }
 
         @Test
         @DisplayName("rechaza descripcion nula")
         void rechazaDescripcionNula() {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", null, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", null, "01/11/2026"));
             assertRechazado(id, "Error: la descripcion debe tener al menos 10 caracteres");
         }
 
@@ -301,8 +320,8 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("valida en orden: con legajo y email invalidos informa solo el legajo")
         void ordenDeValidacion() {
-            int id = gestor.registrarSolicitud("12", "N", "sin-arroba", "TUP",
-                    "X", "X", "corta", "x");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("12", "N", "sin-arroba", "TUP",
+                    "X", "X", "corta", "x"));
             assertRechazado(id, "Error: legajo invalido");
         }
 

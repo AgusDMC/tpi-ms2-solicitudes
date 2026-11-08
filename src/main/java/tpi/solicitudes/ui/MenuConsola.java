@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.modelo.SolicitudRequest;
 import tpi.solicitudes.servicio.ReporteService;
 import tpi.solicitudes.servicio.SolicitudService;
 
@@ -77,7 +78,8 @@ public class MenuConsola {
         String descripcion = scanner.nextLine();
         System.out.print("Fecha (dd/MM/yyyy): ");
         String fecha = scanner.nextLine();
-        solicitudService.registrarSolicitud(legajo, nombre, email, carrera, tipo, prioridad, descripcion, fecha);
+        solicitudService.registrarSolicitud(new SolicitudRequest(legajo, nombre, email, carrera,
+                tipo, prioridad, descripcion, fecha));
     }
 
     private void cambiarEstado() {

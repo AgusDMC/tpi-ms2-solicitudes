@@ -8,6 +8,7 @@ import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.modelo.SolicitudRequest;
 import tpi.solicitudes.repositorio.SolicitudRepository;
 
 // Reglas de negocio de las solicitudes: registrar, cambiar estado, asignar responsable y buscar
@@ -31,17 +32,19 @@ public class SolicitudService {
     }
 
     // registra una solicitud nueva. Devuelve el id o -1 si hubo error
-    public int registrarSolicitud(String legajo, String nombre, String email, String carrera,
-                                  String tipo, String prioridad, String descripcion, String fecha) {
-        if (!validador.datosEstudianteValidos(legajo, email)) {
+    public int registrarSolicitud(SolicitudRequest request) {
+        if (!validador.datosEstudianteValidos(request.legajo(), request.email())) {
             return -1;
         }
-        if (!validador.datosSolicitudValidos(tipo, prioridad, descripcion, fecha)) {
+        if (!validador.datosSolicitudValidos(request.tipo(), request.prioridad(), request.descripcion(),
+                request.fecha())) {
             return -1;
         }
-        Estudiante estudiante = buscarOCrearEstudiante(legajo, nombre, email, carrera);
+        Estudiante estudiante = buscarOCrearEstudiante(request.legajo(), request.nombre(), request.email(),
+                request.carrera());
 
-        Solicitud s = new Solicitud(contador, estudiante, TipoSolicitud.valueOf(tipo), Prioridad.valueOf(prioridad), descripcion, fecha);
+        Solicitud s = new Solicitud(contador, estudiante, TipoSolicitud.valueOf(request.tipo()),
+                Prioridad.valueOf(request.prioridad()), request.descripcion(), request.fecha());
         repositorio.guardarSolicitud(s);
         contador++;
         System.out.println("Solicitud registrada con id " + s.getId());
