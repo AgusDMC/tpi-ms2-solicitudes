@@ -5,12 +5,15 @@ import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.servicio.ReporteService;
 import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 public class Main {
 
     public static void main(String[] args) {
-        GestorSolicitudes g = new GestorSolicitudes(new RepositorioEnMemoria(), new ValidadorSolicitud());
+        RepositorioEnMemoria repositorio = new RepositorioEnMemoria();
+        GestorSolicitudes g = new GestorSolicitudes(repositorio, new ValidadorSolicitud());
+        ReporteService reporte = new ReporteService(repositorio);
         g.cargarDatosEjemplo();
         Scanner sc = new Scanner(System.in);
         int op = -1;
@@ -87,14 +90,14 @@ public class Main {
                     System.out.println("No se encontraron solicitudes");
                 }
                 for (Solicitud s : l) {
-                    System.out.println(g.formatear(s));
+                    System.out.println(reporte.formatear(s));
                 }
             } else if (op == 5) {
                 for (Solicitud s : g.listarSolicitudes()) {
-                    System.out.println(g.formatear(s));
+                    System.out.println(reporte.formatear(s));
                 }
             } else if (op == 6) {
-                System.out.println(g.generarReporte());
+                System.out.println(reporte.generarReporte());
             } else if (op != 0) {
                 System.out.println("Opcion invalida");
             }

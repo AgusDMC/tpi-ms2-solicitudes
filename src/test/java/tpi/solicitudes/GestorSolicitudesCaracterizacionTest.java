@@ -25,6 +25,7 @@ import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.servicio.ReporteService;
 import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 /**
@@ -38,6 +39,7 @@ class GestorSolicitudesCaracterizacionTest {
 
     private RepositorioEnMemoria repositorio;
     private GestorSolicitudes gestor;
+    private ReporteService reporteService;
     private ByteArrayOutputStream salida;
     private PrintStream salidaOriginal;
 
@@ -45,6 +47,7 @@ class GestorSolicitudesCaracterizacionTest {
     void setUp() {
         repositorio = new RepositorioEnMemoria();
         gestor = new GestorSolicitudes(repositorio, new ValidadorSolicitud());
+        reporteService = new ReporteService(repositorio);
         salidaOriginal = System.out;
         salida = new ByteArrayOutputStream();
         System.setOut(new PrintStream(salida, true));
@@ -66,7 +69,7 @@ class GestorSolicitudesCaracterizacionTest {
 
     // Lee la fecha limite desde formatear(), que existe antes y despues de Move Method.
     private String fechaLimite(int id) {
-        String linea = gestor.formatear(buscarPorId(id));
+        String linea = reporteService.formatear(buscarPorId(id));
         String marca = " | Limite: ";
         int inicio = linea.lastIndexOf(marca);
         assertTrue(inicio >= 0, "formatear no incluye la fecha limite: " + linea);
@@ -729,15 +732,15 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("formatear produce las mismas lineas que la opcion 5 del menu")
         void listado() {
             assertEquals("#1 | CERTIFICADO | BAJA | PENDIENTE | Ana Perez (10234) | Resp: Sin asignar"
-                    + " | Fecha: 03/11/2026 | Limite: 18/11/2026", gestor.formatear(buscarPorId(1)));
+                    + " | Fecha: 03/11/2026 | Limite: 18/11/2026", reporteService.formatear(buscarPorId(1)));
             assertEquals("#2 | EQUIVALENCIA | MEDIA | EN_REVISION | Bruno Diaz (10871)"
                     + " | Resp: Martin Sosa (Secretaria Academica) | Fecha: 01/11/2026 | Limite: 08/11/2026",
-                    gestor.formatear(buscarPorId(2)));
+                    reporteService.formatear(buscarPorId(2)));
             assertEquals("#3 | RECLAMO_NOTA | ALTA | APROBADA | Carolina Lopez (11502)"
                     + " | Resp: Carla Ruiz (Departamento de Sistemas) | Fecha: 04/11/2026 | Limite: 07/11/2026",
-                    gestor.formatear(buscarPorId(3)));
+                    reporteService.formatear(buscarPorId(3)));
             assertEquals("#4 | CAMBIO_COMISION | MEDIA | PENDIENTE | Ana Perez (10234) | Resp: Sin asignar"
-                    + " | Fecha: 02/11/2026 | Limite: 09/11/2026", gestor.formatear(buscarPorId(4)));
+                    + " | Fecha: 02/11/2026 | Limite: 09/11/2026", reporteService.formatear(buscarPorId(4)));
         }
 
         @Test
@@ -768,7 +771,7 @@ class GestorSolicitudesCaracterizacionTest {
                     + " | Fecha: 02/11/2026 | Limite: 09/11/2026\n"
                     + "============================================\n";
 
-            assertEquals(esperado, gestor.generarReporte());
+            assertEquals(esperado, reporteService.generarReporte());
         }
 
         @Test
@@ -778,7 +781,7 @@ class GestorSolicitudesCaracterizacionTest {
             assertTrue(gestor.asignarResponsable(1, 1));
             assertEquals(5, registrarValida("10871", "OTRO", "ALTA", "05/11/2026"));
 
-            String reporte = gestor.generarReporte();
+            String reporte = reporteService.generarReporte();
 
             assertTrue(reporte.contains("Total de solicitudes: 5\n"));
             assertTrue(reporte.contains("APROBADA: 0\nRECHAZADA: 0\nCERRADA: 1\n"));
@@ -797,7 +800,7 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("sin solicitudes informa todo en 0 y '(ninguna)'")
         void reporteVacio() {
-            String reporte = gestor.generarReporte();
+            String reporte = reporteService.generarReporte();
 
             assertTrue(reporte.startsWith("========== REPORTE DE SOLICITUDES ==========\nTotal de solicitudes: 0\n"));
             assertTrue(reporte.contains("PENDIENTE: 0\n"));
