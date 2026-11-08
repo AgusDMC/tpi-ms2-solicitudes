@@ -2,48 +2,40 @@ package tpi.solicitudes.servicio;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import tpi.solicitudes.excepciones.DatosInvalidosException;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 
 // Valida los datos que llegan para registrar estudiantes y solicitudes
 public class ValidadorSolicitud {
 
-    public boolean datosEstudianteValidos(String legajo, String email) {
+    public void validarDatosEstudiante(String legajo, String email) {
         if (legajo == null || legajo.trim().isEmpty()) {
-            System.out.println("Error: legajo vacio");
-            return false;
+            throw new DatosInvalidosException("legajo vacio");
         }
         if (legajo.length() < 4 || legajo.length() > 8) {
-            System.out.println("Error: legajo invalido");
-            return false;
+            throw new DatosInvalidosException("legajo invalido");
         }
         if (email == null || !email.contains("@") || !email.contains(".")) {
-            System.out.println("Error: email invalido");
-            return false;
+            throw new DatosInvalidosException("email invalido");
         }
-        return true;
     }
 
-    public boolean datosSolicitudValidos(String tipo, String prioridad, String descripcion, String fecha) {
+    public void validarDatosSolicitud(String tipo, String prioridad, String descripcion, String fecha) {
         if (!esTipoValido(tipo)) {
-            System.out.println("Error: tipo invalido");
-            return false;
+            throw new DatosInvalidosException("tipo invalido");
         }
         if (!esPrioridadValida(prioridad)) {
-            System.out.println("Error: prioridad invalida");
-            return false;
+            throw new DatosInvalidosException("prioridad invalida");
         }
         if (descripcion == null || descripcion.trim().length() < 10) {
-            System.out.println("Error: la descripcion debe tener al menos 10 caracteres");
-            return false;
+            throw new DatosInvalidosException("la descripcion debe tener al menos 10 caracteres");
         }
         try {
             LocalDate.parse(fecha, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         } catch (Exception e) {
-            System.out.println("Error: fecha invalida");
-            return false;
+            throw new DatosInvalidosException("fecha invalida");
         }
-        return true;
     }
 
     private boolean esTipoValido(String tipo) {

@@ -2,6 +2,9 @@ package tpi.solicitudes.servicio;
 
 import java.util.ArrayList;
 import java.util.List;
+import tpi.solicitudes.excepciones.DatosInvalidosException;
+import tpi.solicitudes.excepciones.SolicitudNoEncontradaException;
+import tpi.solicitudes.excepciones.TransicionInvalidaException;
 import tpi.solicitudes.modelo.Estado;
 import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
@@ -31,15 +34,10 @@ public class SolicitudService {
         return repositorio.listarResponsables();
     }
 
-    // registra una solicitud nueva. Devuelve el id o -1 si hubo error
+    // registra una solicitud nueva y devuelve su id. Lanza DatosInvalidosException si algun dato no es valido
     public int registrarSolicitud(SolicitudRequest request) {
-        if (!validador.datosEstudianteValidos(request.legajo(), request.email())) {
-            return -1;
-        }
-        if (!validador.datosSolicitudValidos(request.tipo(), request.prioridad(), request.descripcion(),
-                request.fecha())) {
-            return -1;
-        }
+        validador.validarDatosEstudiante(request.legajo(), request.email());
+        validador.validarDatosSolicitud(request.tipo(), request.prioridad(), request.descripcion(), request.fecha());
         Estudiante estudiante = buscarOCrearEstudiante(request.legajo(), request.nombre(), request.email(),
                 request.carrera());
 
@@ -62,7 +60,10 @@ public class SolicitudService {
 
     // registra un estudiante suelto (se usa en la carga inicial)
     public boolean registrarEstudiante(String legajo, String nombre, String email, String carrera) {
-        if (!validador.datosEstudianteValidos(legajo, email)) {
+        try {
+            validador.validarDatosEstudiante(legajo, email);
+        } catch (DatosInvalidosException e) {
+            System.out.println("Error: " + e.getMessage());
             return false;
         }
         if (repositorio.buscarEstudiantePorLegajo(legajo) != null) {
@@ -78,24 +79,35 @@ public class SolicitudService {
         repositorio.guardarResponsable(r);
     }
 
-    // cambia el estado. Devuelve 0 si salio bien, 1 si no existe la solicitud, 2 si la transicion no es valida, 3 si falta responsable
-    public int cambiarEstado(int id, String nuevo, String obs) {
+    // cambia el estado. Lanza SolicitudNoEncontradaException si no existe la solicitud
+    // y TransicionInvalidaException si el cambio no esta permitido o falta el responsable
+    public void cambiarEstado(int id, String nuevo, String obs) {
         Solicitud s = repositorio.buscarSolicitudPorId(id);
         if (s == null) {
-            return 1;
+            throw new SolicitudNoEncontradaException("no existe la solicitud");
         }
         Estado destino = estadoDesde(nuevo);
         if (destino == null || !s.getEstado().puedePasarA(destino)) {
-            return 2;
+            throw new TransicionInvalidaException(mensajeTransicionInvalida(s.getEstado(), nuevo));
         }
         if (destino == Estado.EN_REVISION && s.getResponsable() == null) {
-            return 3;
+            throw new TransicionInvalidaException("primero hay que asignar un responsable");
         }
         s.setEstado(destino);
         if (obs != null && !obs.isEmpty()) {
             s.setObservacion(obs);
         }
-        return 0;
+    }
+
+    private String mensajeTransicionInvalida(Estado actual, String pedido) {
+        List<String> permitidos = new ArrayList<>();
+        for (Estado estado : Estado.values()) {
+            if (actual.puedePasarA(estado)) permitidos.add(estado.name());
+        }
+        String detalle = permitidos.isEmpty()
+                ? actual + " es un estado final"
+                : "desde " + actual + " solo se puede pasar a " + String.join(" o ", permitidos);
+        return "no se puede pasar de " + actual + " a " + pedido + ": " + detalle;
     }
 
     private Estado estadoDesde(String texto) {
