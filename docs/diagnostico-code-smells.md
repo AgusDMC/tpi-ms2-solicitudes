@@ -79,7 +79,7 @@ Martin Fowler llama **code smells** a estas señales: no son errores (el program
 - **Impacto:** viola el principio **DRY (Don't Repeat Yourself)**: una misma regla está en varios lugares.
 - **Riesgo de mantenimiento:** alto. Si cambia la regla del legajo y se modifica solo uno de los dos lugares, el sistema acepta un legajo al registrar una solicitud y lo rechaza al registrar un estudiante. Es un error silencioso, difícil de detectar.
 - **Prioridad:** **Alta.**
-- **Captura:** `03-duplicated-code.png`
+- **Capturas:** `03-duplicated-code-A.png` (validación en `registrarSolicitud`) y `03-duplicated-code-B.png` (la misma validación en `registrarEstudiante`)
 
 ### Smell 4: Primitive Obsession
 
@@ -138,7 +138,7 @@ Martin Fowler llama **code smells** a estas señales: no son errores (el program
 - **Impacto:** las llamadas son difíciles de leer y, como todos los parámetros son del mismo tipo, **el compilador no detecta si se invierten dos** (por ejemplo, el tipo y la prioridad).
 - **Riesgo de mantenimiento:** medio. Agregar un dato nuevo a la solicitud obliga a cambiar la firma y todas las llamadas.
 - **Prioridad:** **Media.** Se resuelve con **Introduce Parameter Object** (`SolicitudRequest`).
-- **Capturas:** `09-long-parameter-list-a.png` (la firma) y `09-long-parameter-list-b.png` (las llamadas)
+- **Capturas:** `09-long-parameter-list-A.png` (la firma) y `09-long-parameter-list-B.png` (las llamadas)
 
 ### Smell 10: Feature Envy
 
