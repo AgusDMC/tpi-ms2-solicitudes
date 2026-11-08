@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -24,8 +25,12 @@ import tpi.solicitudes.modelo.Prioridad;
 import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.modelo.SolicitudRequest;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
 import tpi.solicitudes.datos.DatosEjemplo;
+import tpi.solicitudes.excepciones.DatosInvalidosException;
+import tpi.solicitudes.excepciones.SolicitudNoEncontradaException;
+import tpi.solicitudes.excepciones.TransicionInvalidaException;
 import tpi.solicitudes.servicio.ReporteService;
 import tpi.solicitudes.servicio.SolicitudService;
 import tpi.solicitudes.servicio.ValidadorSolicitud;
@@ -65,8 +70,8 @@ class GestorSolicitudesCaracterizacionTest {
     }
 
     private int registrarValida(String legajo, String tipo, String prioridad, String fecha) {
-        return gestor.registrarSolicitud(legajo, "Nombre Prueba", "prueba@mail.test", "TUP",
-                tipo, prioridad, DESCRIPCION_VALIDA, fecha);
+        return gestor.registrarSolicitud(new SolicitudRequest(legajo, "Nombre Prueba", "prueba@mail.test", "TUP",
+                tipo, prioridad, DESCRIPCION_VALIDA, fecha));
     }
 
     // Lee la fecha limite desde formatear(), que existe antes y despues de Move Method.
@@ -94,8 +99,8 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("una solicitud valida se registra con id 1, estado PENDIENTE y sin responsable")
         void registraSolicitudValida() {
-            int id = gestor.registrarSolicitud("10234", "Ana Perez", "ana.perez@mail.test", "TUP",
-                    "CERTIFICADO", "BAJA", "Certificado de alumno regular", "03/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("10234", "Ana Perez", "ana.perez@mail.test", "TUP",
+                    "CERTIFICADO", "BAJA", "Certificado de alumno regular", "03/11/2026"));
 
             assertEquals(1, id);
             assertEquals(1, repositorio.listarSolicitudes().size());
@@ -125,7 +130,9 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("un registro rechazado no consume id")
         void rechazoNoConsumeId() {
             assertEquals(1, registrarValida("1001", "OTRO", "ALTA", "01/11/2026"));
-            assertEquals(-1, registrarValida("1002", "INEXISTENTE", "ALTA", "01/11/2026"));
+            DatosInvalidosException e = assertThrows(DatosInvalidosException.class,
+                    () -> registrarValida("1002", "INEXISTENTE", "ALTA", "01/11/2026"));
+            assertEquals("tipo invalido", e.getMessage());
             assertEquals(2, registrarValida("1003", "OTRO", "ALTA", "01/11/2026"));
             assertEquals(2, repositorio.listarSolicitudes().size());
         }
@@ -133,8 +140,8 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("crea el estudiante si no existe")
         void creaEstudianteNuevo() {
-            gestor.registrarSolicitud("20001", "Juan Gomez", "juan@mail.test", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Juan Gomez", "juan@mail.test", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
 
             assertEquals(1, repositorio.listarEstudiantes().size());
             Estudiante e = repositorio.listarEstudiantes().get(0);
@@ -145,12 +152,30 @@ class GestorSolicitudesCaracterizacionTest {
         }
 
         @Test
+        @DisplayName("toma cada dato del request para el estudiante nuevo y la solicitud")
+        void usaCadaCampoDelRequest() {
+            gestor.registrarSolicitud(new SolicitudRequest("30003", "Lucia Ramos", "lucia@mail.test", "LIC",
+                    "EQUIVALENCIA", "ALTA", "Equivalencia de Matematica Discreta", "05/11/2026"));
+
+            Solicitud s = gestor.listarSolicitudes().get(0);
+            Estudiante e = s.getEstudiante();
+            assertEquals("30003", e.getLegajo());
+            assertEquals("Lucia Ramos", e.getNombre());
+            assertEquals("lucia@mail.test", e.getEmail());
+            assertEquals("LIC", e.getCarrera());
+            assertEquals(TipoSolicitud.EQUIVALENCIA, s.getTipo());
+            assertEquals(Prioridad.ALTA, s.getPrioridad());
+            assertEquals("Equivalencia de Matematica Discreta", s.getDescripcion());
+            assertEquals("05/11/2026", s.getFecha());
+        }
+
+        @Test
         @DisplayName("reutiliza el estudiante existente sin actualizar sus datos")
         void reutilizaEstudianteExistente() {
-            gestor.registrarSolicitud("20001", "Juan Gomez", "juan@mail.test", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
-            gestor.registrarSolicitud("20001", "Otro Nombre", "otro@mail.test", "LIC",
-                    "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026");
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Juan Gomez", "juan@mail.test", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
+            gestor.registrarSolicitud(new SolicitudRequest("20001", "Otro Nombre", "otro@mail.test", "LIC",
+                    "CERTIFICADO", "ALTA", DESCRIPCION_VALIDA, "02/11/2026"));
 
             assertEquals(1, repositorio.listarEstudiantes().size());
             assertSame(repositorio.listarSolicitudes().get(0).getEstudiante(), repositorio.listarSolicitudes().get(1).getEstudiante());
@@ -176,16 +201,16 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("acepta una descripcion de exactamente 10 caracteres")
         void aceptaDescripcionDeDiezCaracteres() {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", "0123456789", "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", "0123456789", "01/11/2026"));
             assertEquals(1, id);
         }
 
         @Test
         @DisplayName("acepta un email con solo '@' y '.' en cualquier posicion")
         void aceptaEmailMinimo() {
-            int id = gestor.registrarSolicitud("1001", "N", "a.b@c", "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
+            int id = gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a.b@c", "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026"));
             assertEquals(1, id);
         }
 
@@ -203,107 +228,96 @@ class GestorSolicitudesCaracterizacionTest {
     @DisplayName("Validaciones del registro")
     class Validaciones {
 
-        private void assertRechazado(int id, String mensaje) {
-            assertEquals(-1, id);
+        private void assertRechazado(Executable registro, String mensaje) {
+            DatosInvalidosException e = assertThrows(DatosInvalidosException.class, registro);
+            assertEquals(mensaje, e.getMessage());
             assertTrue(repositorio.listarSolicitudes().isEmpty());
             assertTrue(repositorio.listarEstudiantes().isEmpty());
-            assertEquals(mensaje + "\n", consola());
+            assertEquals("", consola());
         }
 
         @ParameterizedTest(name = "legajo [{0}]")
         @ValueSource(strings = {"", "   "})
         @DisplayName("rechaza legajo vacio o en blanco")
         void rechazaLegajoVacio(String legajo) {
-            int id = registrarValida(legajo, "OTRO", "MEDIA", "01/11/2026");
-            assertRechazado(id, "Error: legajo vacio");
+            assertRechazado(() -> registrarValida(legajo, "OTRO", "MEDIA", "01/11/2026"), "legajo vacio");
         }
 
         @Test
         @DisplayName("rechaza legajo nulo")
         void rechazaLegajoNulo() {
-            int id = registrarValida(null, "OTRO", "MEDIA", "01/11/2026");
-            assertRechazado(id, "Error: legajo vacio");
+            assertRechazado(() -> registrarValida(null, "OTRO", "MEDIA", "01/11/2026"), "legajo vacio");
         }
 
         @ParameterizedTest(name = "legajo [{0}]")
         @ValueSource(strings = {"123", "123456789"})
         @DisplayName("rechaza legajo con menos de 4 o mas de 8 caracteres")
         void rechazaLegajoFueraDeRango(String legajo) {
-            int id = registrarValida(legajo, "OTRO", "MEDIA", "01/11/2026");
-            assertRechazado(id, "Error: legajo invalido");
+            assertRechazado(() -> registrarValida(legajo, "OTRO", "MEDIA", "01/11/2026"), "legajo invalido");
         }
 
         @ParameterizedTest(name = "email [{0}]")
         @ValueSource(strings = {"", "ana.perez.mail.test", "ana@mailtest"})
         @DisplayName("rechaza email sin '@' o sin '.'")
         void rechazaEmailInvalido(String email) {
-            int id = gestor.registrarSolicitud("1001", "N", email, "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
-            assertRechazado(id, "Error: email invalido");
+            assertRechazado(() -> gestor.registrarSolicitud(new SolicitudRequest("1001", "N", email, "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026")), "email invalido");
         }
 
         @Test
         @DisplayName("rechaza email nulo")
         void rechazaEmailNulo() {
-            int id = gestor.registrarSolicitud("1001", "N", null, "TUP",
-                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026");
-            assertRechazado(id, "Error: email invalido");
+            assertRechazado(() -> gestor.registrarSolicitud(new SolicitudRequest("1001", "N", null, "TUP",
+                    "OTRO", "MEDIA", DESCRIPCION_VALIDA, "01/11/2026")), "email invalido");
         }
 
         @ParameterizedTest(name = "tipo [{0}]")
         @ValueSource(strings = {"", "INSCRIPCION", "certificado"})
         @DisplayName("rechaza tipo inexistente o en minusculas")
         void rechazaTipoInvalido(String tipo) {
-            int id = registrarValida("1001", tipo, "MEDIA", "01/11/2026");
-            assertRechazado(id, "Error: tipo invalido");
+            assertRechazado(() -> registrarValida("1001", tipo, "MEDIA", "01/11/2026"), "tipo invalido");
         }
 
         @ParameterizedTest(name = "prioridad [{0}]")
         @ValueSource(strings = {"", "URGENTE", "alta"})
         @DisplayName("rechaza prioridad inexistente o en minusculas")
         void rechazaPrioridadInvalida(String prioridad) {
-            int id = registrarValida("1001", "OTRO", prioridad, "01/11/2026");
-            assertRechazado(id, "Error: prioridad invalida");
+            assertRechazado(() -> registrarValida("1001", "OTRO", prioridad, "01/11/2026"), "prioridad invalida");
         }
 
         @ParameterizedTest(name = "descripcion [{0}]")
         @ValueSource(strings = {"", "012345678", "   012345678   "})
         @DisplayName("rechaza descripcion con menos de 10 caracteres sin contar espacios extremos")
         void rechazaDescripcionCorta(String descripcion) {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", descripcion, "01/11/2026");
-            assertRechazado(id, "Error: la descripcion debe tener al menos 10 caracteres");
+            assertRechazado(() -> gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", descripcion, "01/11/2026")), "la descripcion debe tener al menos 10 caracteres");
         }
 
         @Test
         @DisplayName("rechaza descripcion nula")
         void rechazaDescripcionNula() {
-            int id = gestor.registrarSolicitud("1001", "N", "a@b.c", "TUP",
-                    "OTRO", "MEDIA", null, "01/11/2026");
-            assertRechazado(id, "Error: la descripcion debe tener al menos 10 caracteres");
+            assertRechazado(() -> gestor.registrarSolicitud(new SolicitudRequest("1001", "N", "a@b.c", "TUP",
+                    "OTRO", "MEDIA", null, "01/11/2026")), "la descripcion debe tener al menos 10 caracteres");
         }
 
         @ParameterizedTest(name = "fecha [{0}]")
         @ValueSource(strings = {"", "32/01/2026", "01/13/2026", "1/11/2026", "2026-11-03", "03/11/26", "abc"})
         @DisplayName("rechaza fecha fuera del formato dd/MM/yyyy o con dia/mes imposible")
         void rechazaFechaInvalida(String fecha) {
-            int id = registrarValida("1001", "OTRO", "MEDIA", fecha);
-            assertRechazado(id, "Error: fecha invalida");
+            assertRechazado(() -> registrarValida("1001", "OTRO", "MEDIA", fecha), "fecha invalida");
         }
 
         @Test
         @DisplayName("rechaza fecha nula")
         void rechazaFechaNula() {
-            int id = registrarValida("1001", "OTRO", "MEDIA", null);
-            assertRechazado(id, "Error: fecha invalida");
+            assertRechazado(() -> registrarValida("1001", "OTRO", "MEDIA", null), "fecha invalida");
         }
 
         @Test
         @DisplayName("valida en orden: con legajo y email invalidos informa solo el legajo")
         void ordenDeValidacion() {
-            int id = gestor.registrarSolicitud("12", "N", "sin-arroba", "TUP",
-                    "X", "X", "corta", "x");
-            assertRechazado(id, "Error: legajo invalido");
+            assertRechazado(() -> gestor.registrarSolicitud(new SolicitudRequest("12", "N", "sin-arroba", "TUP",
+                    "X", "X", "corta", "x")), "legajo invalido");
         }
 
         @Test
@@ -383,56 +397,71 @@ class GestorSolicitudesCaracterizacionTest {
             id = registrarValida("1001", "OTRO", "MEDIA", "01/11/2026");
         }
 
+        private void assertTransicionInvalida(String desde, String hacia, String observacion) {
+            TransicionInvalidaException e = assertThrows(TransicionInvalidaException.class,
+                    () -> gestor.cambiarEstado(id, hacia, observacion));
+            String permitidos = switch (desde) {
+                case "PENDIENTE" -> "desde PENDIENTE solo se puede pasar a EN_REVISION";
+                case "EN_REVISION" -> "desde EN_REVISION solo se puede pasar a APROBADA o RECHAZADA";
+                case "APROBADA" -> "desde APROBADA solo se puede pasar a CERRADA";
+                case "RECHAZADA" -> "desde RECHAZADA solo se puede pasar a CERRADA";
+                default -> "CERRADA es un estado final";
+            };
+            assertEquals("no se puede pasar de " + desde + " a " + hacia + ": " + permitidos, e.getMessage());
+        }
+
         private void llevarA(String... estados) {
             assertTrue(gestor.asignarResponsable(id, 1));
             for (String e : estados) {
-                assertEquals(0, gestor.cambiarEstado(id, e, ""));
+                gestor.cambiarEstado(id, e, "");
             }
         }
 
         @Test
-        @DisplayName("PENDIENTE -> EN_REVISION con responsable devuelve 0")
+        @DisplayName("PENDIENTE -> EN_REVISION con responsable cambia el estado")
         void pendienteAEnRevision() {
             gestor.asignarResponsable(id, 1);
 
-            assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", "obs"));
+            gestor.cambiarEstado(id, "EN_REVISION", "obs");
             assertEquals(Estado.EN_REVISION, buscarPorId(id).getEstado());
         }
 
         @Test
-        @DisplayName("PENDIENTE -> EN_REVISION sin responsable devuelve 3 y no cambia el estado")
+        @DisplayName("PENDIENTE -> EN_REVISION sin responsable lanza TransicionInvalidaException y no cambia el estado")
         void enRevisionSinResponsable() {
             int sinResponsable = registrarValida("1002", "OTRO", "MEDIA", "01/11/2026");
 
-            assertEquals(3, gestor.cambiarEstado(sinResponsable, "EN_REVISION", "obs"));
+            TransicionInvalidaException e = assertThrows(TransicionInvalidaException.class,
+                    () -> gestor.cambiarEstado(sinResponsable, "EN_REVISION", "obs"));
+            assertEquals("primero hay que asignar un responsable", e.getMessage());
             assertEquals(Estado.PENDIENTE, buscarPorId(sinResponsable).getEstado());
             assertNull(buscarPorId(sinResponsable).getObservacion());
         }
 
         @Test
-        @DisplayName("PENDIENTE -> APROBADA sin responsable devuelve 2 (la transicion se evalua antes)")
+        @DisplayName("PENDIENTE -> APROBADA sin responsable informa la transicion invalida (se evalua antes)")
         void pendienteAAprobadaSinResponsable() {
-            assertEquals(2, gestor.cambiarEstado(id, "APROBADA", ""));
+            assertTransicionInvalida("PENDIENTE", "APROBADA", "");
             assertEquals(Estado.PENDIENTE, buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "EN_REVISION -> {0}")
         @ValueSource(strings = {"APROBADA", "RECHAZADA"})
-        @DisplayName("EN_REVISION -> APROBADA o RECHAZADA devuelve 0")
+        @DisplayName("EN_REVISION -> APROBADA o RECHAZADA cambia el estado")
         void enRevisionAResolucion(String destino) {
             llevarA("EN_REVISION");
 
-            assertEquals(0, gestor.cambiarEstado(id, destino, ""));
+            gestor.cambiarEstado(id, destino, "");
             assertEquals(Estado.valueOf(destino), buscarPorId(id).getEstado());
         }
 
         @ParameterizedTest(name = "{0} -> CERRADA")
         @ValueSource(strings = {"APROBADA", "RECHAZADA"})
-        @DisplayName("APROBADA o RECHAZADA -> CERRADA devuelve 0")
+        @DisplayName("APROBADA o RECHAZADA -> CERRADA cambia el estado")
         void resolucionACerrada(String origen) {
             llevarA("EN_REVISION", origen);
 
-            assertEquals(0, gestor.cambiarEstado(id, "CERRADA", ""));
+            gestor.cambiarEstado(id, "CERRADA", "");
             assertEquals(Estado.CERRADA, buscarPorId(id).getEstado());
         }
 
@@ -442,7 +471,7 @@ class GestorSolicitudesCaracterizacionTest {
         void transicionesProhibidasDesdePendiente(String destino) {
             assertTrue(gestor.asignarResponsable(id, 1));
 
-            assertEquals(2, gestor.cambiarEstado(id, destino, "obs"));
+            assertTransicionInvalida("PENDIENTE", destino, "obs");
             assertEquals(Estado.PENDIENTE, buscarPorId(id).getEstado());
             assertNull(buscarPorId(id).getObservacion());
         }
@@ -453,7 +482,7 @@ class GestorSolicitudesCaracterizacionTest {
         void transicionesProhibidasDesdeEnRevision(String destino) {
             llevarA("EN_REVISION");
 
-            assertEquals(2, gestor.cambiarEstado(id, destino, ""));
+            assertTransicionInvalida("EN_REVISION", destino, "");
             assertEquals(Estado.EN_REVISION, buscarPorId(id).getEstado());
         }
 
@@ -463,7 +492,7 @@ class GestorSolicitudesCaracterizacionTest {
         void transicionesProhibidasDesdeAprobada(String destino) {
             llevarA("EN_REVISION", "APROBADA");
 
-            assertEquals(2, gestor.cambiarEstado(id, destino, ""));
+            assertTransicionInvalida("APROBADA", destino, "");
             assertEquals(Estado.APROBADA, buscarPorId(id).getEstado());
         }
 
@@ -473,7 +502,7 @@ class GestorSolicitudesCaracterizacionTest {
         void transicionesProhibidasDesdeRechazada(String destino) {
             llevarA("EN_REVISION", "RECHAZADA");
 
-            assertEquals(2, gestor.cambiarEstado(id, destino, ""));
+            assertTransicionInvalida("RECHAZADA", destino, "");
             assertEquals(Estado.RECHAZADA, buscarPorId(id).getEstado());
         }
 
@@ -483,14 +512,16 @@ class GestorSolicitudesCaracterizacionTest {
         void cerradaEsFinal(String destino) {
             llevarA("EN_REVISION", "APROBADA", "CERRADA");
 
-            assertEquals(2, gestor.cambiarEstado(id, destino, ""));
+            assertTransicionInvalida("CERRADA", destino, "");
             assertEquals(Estado.CERRADA, buscarPorId(id).getEstado());
         }
 
         @Test
-        @DisplayName("id inexistente devuelve 1")
+        @DisplayName("id inexistente lanza SolicitudNoEncontradaException")
         void idInexistente() {
-            assertEquals(1, gestor.cambiarEstado(99, "EN_REVISION", ""));
+            SolicitudNoEncontradaException e = assertThrows(SolicitudNoEncontradaException.class,
+                    () -> gestor.cambiarEstado(99, "EN_REVISION", ""));
+            assertEquals("no existe la solicitud", e.getMessage());
         }
 
         @Test
@@ -507,12 +538,12 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("una observacion vacia o nula no reemplaza la anterior")
         void observacionVaciaNoReemplaza() {
             assertTrue(gestor.asignarResponsable(id, 1));
-            assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", "Primera"));
+            gestor.cambiarEstado(id, "EN_REVISION", "Primera");
 
-            assertEquals(0, gestor.cambiarEstado(id, "APROBADA", ""));
+            gestor.cambiarEstado(id, "APROBADA", "");
             assertEquals("Primera", buscarPorId(id).getObservacion());
 
-            assertEquals(0, gestor.cambiarEstado(id, "CERRADA", null));
+            gestor.cambiarEstado(id, "CERRADA", null);
             assertEquals("Primera", buscarPorId(id).getObservacion());
         }
 
@@ -523,8 +554,8 @@ class GestorSolicitudesCaracterizacionTest {
             salida.reset();
 
             gestor.cambiarEstado(id, "EN_REVISION", "");
-            gestor.cambiarEstado(id, "PENDIENTE", "");
-            gestor.cambiarEstado(99, "EN_REVISION", "");
+            assertThrows(TransicionInvalidaException.class, () -> gestor.cambiarEstado(id, "PENDIENTE", ""));
+            assertThrows(SolicitudNoEncontradaException.class, () -> gestor.cambiarEstado(99, "EN_REVISION", ""));
 
             assertEquals("", consola());
         }
@@ -565,9 +596,9 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("permite asignar en estados no cerrados")
         void asignaEnEstadosAbiertos(String estado) {
             assertTrue(gestor.asignarResponsable(id, 1));
-            assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", ""));
+            gestor.cambiarEstado(id, "EN_REVISION", "");
             if (!estado.equals("EN_REVISION")) {
-                assertEquals(0, gestor.cambiarEstado(id, estado, ""));
+                gestor.cambiarEstado(id, estado, "");
             }
             assertEquals(Estado.valueOf(estado), buscarPorId(id).getEstado());
 
@@ -579,9 +610,9 @@ class GestorSolicitudesCaracterizacionTest {
         @DisplayName("rechaza la asignacion a una solicitud CERRADA")
         void rechazaCerrada() {
             assertTrue(gestor.asignarResponsable(id, 1));
-            assertEquals(0, gestor.cambiarEstado(id, "EN_REVISION", ""));
-            assertEquals(0, gestor.cambiarEstado(id, "RECHAZADA", ""));
-            assertEquals(0, gestor.cambiarEstado(id, "CERRADA", ""));
+            gestor.cambiarEstado(id, "EN_REVISION", "");
+            gestor.cambiarEstado(id, "RECHAZADA", "");
+            gestor.cambiarEstado(id, "CERRADA", "");
 
             assertFalse(gestor.asignarResponsable(id, 2));
             assertEquals(1, buscarPorId(id).getResponsable().getId());
@@ -731,6 +762,17 @@ class GestorSolicitudesCaracterizacionTest {
         }
 
         @Test
+        @DisplayName("mejora autorizada: pasar #4 a APROBADA indica el estado actual y los permitidos")
+        void mensajeDeTransicionInvalidaEsEspecifico() {
+            TransicionInvalidaException e = assertThrows(TransicionInvalidaException.class,
+                    () -> gestor.cambiarEstado(4, "APROBADA", ""));
+
+            assertEquals("no se puede pasar de PENDIENTE a APROBADA: desde PENDIENTE solo se puede pasar a EN_REVISION",
+                    e.getMessage());
+            assertEquals(Estado.PENDIENTE, buscarPorId(4).getEstado());
+        }
+
+        @Test
         @DisplayName("formatear produce las mismas lineas que la opcion 5 del menu")
         void listado() {
             assertEquals("#1 | CERTIFICADO | BAJA | PENDIENTE | Ana Perez (10234) | Resp: Sin asignar"
@@ -779,7 +821,7 @@ class GestorSolicitudesCaracterizacionTest {
         @Test
         @DisplayName("el reporte refleja cambios posteriores a la carga")
         void reporteTrasCambios() {
-            assertEquals(0, gestor.cambiarEstado(3, "CERRADA", ""));
+            gestor.cambiarEstado(3, "CERRADA", "");
             assertTrue(gestor.asignarResponsable(1, 1));
             assertEquals(5, registrarValida("10871", "OTRO", "ALTA", "05/11/2026"));
 

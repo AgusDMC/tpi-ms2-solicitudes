@@ -2,8 +2,12 @@ package tpi.solicitudes.ui;
 
 import java.util.List;
 import java.util.Scanner;
+import tpi.solicitudes.excepciones.DatosInvalidosException;
+import tpi.solicitudes.excepciones.SolicitudNoEncontradaException;
+import tpi.solicitudes.excepciones.TransicionInvalidaException;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
+import tpi.solicitudes.modelo.SolicitudRequest;
 import tpi.solicitudes.servicio.ReporteService;
 import tpi.solicitudes.servicio.SolicitudService;
 
@@ -26,7 +30,8 @@ public class MenuConsola {
             mostrarMenu();
             try {
                 opcion = Integer.parseInt(scanner.nextLine().trim());
-            } catch (Exception e) {
+            } catch (NumberFormatException e) {
+                opcion = -1;
             }
             if (opcion == 1) {
                 registrarSolicitud();
@@ -77,40 +82,60 @@ public class MenuConsola {
         String descripcion = scanner.nextLine();
         System.out.print("Fecha (dd/MM/yyyy): ");
         String fecha = scanner.nextLine();
-        solicitudService.registrarSolicitud(legajo, nombre, email, carrera, tipo, prioridad, descripcion, fecha);
+        try {
+            solicitudService.registrarSolicitud(new SolicitudRequest(legajo, nombre, email, carrera,
+                    tipo, prioridad, descripcion, fecha));
+        } catch (DatosInvalidosException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     private void cambiarEstado() {
         System.out.print("Id de la solicitud: ");
-        int id = Integer.parseInt(scanner.nextLine().trim());
+        Integer id = leerId();
+        if (id == null) {
+            return;
+        }
         System.out.print("Nuevo estado (EN_REVISION, APROBADA, RECHAZADA, CERRADA): ");
         String nuevo = scanner.nextLine().toUpperCase();
         System.out.print("Observacion (opcional): ");
         String observacion = scanner.nextLine();
-        int resultado = solicitudService.cambiarEstado(id, nuevo, observacion);
-        if (resultado == 0) {
+        try {
+            solicitudService.cambiarEstado(id, nuevo, observacion);
             System.out.println("Estado actualizado");
-        } else if (resultado == 1) {
-            System.out.println("Error: no existe la solicitud");
-        } else if (resultado == 2) {
-            System.out.println("Error: no se puede pasar a ese estado");
-        } else if (resultado == 3) {
-            System.out.println("Error: primero hay que asignar un responsable");
+        } catch (SolicitudNoEncontradaException | TransicionInvalidaException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void asignarResponsable() {
         System.out.print("Id de la solicitud: ");
-        int idSolicitud = Integer.parseInt(scanner.nextLine().trim());
+        Integer idSolicitud = leerId();
+        if (idSolicitud == null) {
+            return;
+        }
         for (Responsable responsable : solicitudService.listarResponsables()) {
             System.out.println(responsable.getId() + ". " + responsable.getNombre() + " - " + responsable.getArea());
         }
         System.out.print("Id del responsable: ");
-        int idResponsable = Integer.parseInt(scanner.nextLine().trim());
+        Integer idResponsable = leerId();
+        if (idResponsable == null) {
+            return;
+        }
         if (solicitudService.asignarResponsable(idSolicitud, idResponsable)) {
             System.out.println("Responsable asignado");
         } else {
             System.out.println("Error: no se pudo asignar");
+        }
+    }
+
+    // Lee un id numerico. Si no es un numero, avisa y devuelve null para volver al menu
+    private Integer leerId() {
+        try {
+            return Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Error: el id debe ser un numero");
+            return null;
         }
     }
 
