@@ -1,4 +1,4 @@
-package tpi.solicitudes;
+package tpi.solicitudes.servicio;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,16 +9,15 @@ import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.SolicitudRepository;
-import tpi.solicitudes.servicio.ValidadorSolicitud;
 
-// Clase principal del sistema: maneja todo
-public class GestorSolicitudes {
+// Reglas de negocio de las solicitudes: registrar, cambiar estado, asignar responsable y buscar
+public class SolicitudService {
 
     private final SolicitudRepository repositorio;
     private final ValidadorSolicitud validador;
-    int contador = 1;
+    private int contador = 1;
 
-    public GestorSolicitudes(SolicitudRepository repositorio, ValidadorSolicitud validador) {
+    public SolicitudService(SolicitudRepository repositorio, ValidadorSolicitud validador) {
         this.repositorio = repositorio;
         this.validador = validador;
     }
@@ -133,31 +132,5 @@ public class GestorSolicitudes {
             }
         }
         return res;
-    }
-
-    // carga datos de ejemplo (sinteticos) para poder probar el sistema
-    public void cargarDatosEjemplo() {
-        registrarResponsable("Laura Gimenez", "Alumnado", "alumnado@facultad.test");
-        registrarResponsable("Martin Sosa", "Secretaria Academica", "academica@facultad.test");
-        registrarResponsable("Carla Ruiz", "Departamento de Sistemas", "sistemas@facultad.test");
-
-        registrarEstudiante("10234", "Ana Perez", "ana.perez@mail.test", "TUP");
-        registrarEstudiante("10871", "Bruno Diaz", "bruno.diaz@mail.test", "TUP");
-        registrarEstudiante("11502", "Carolina Lopez", "caro.lopez@mail.test", "TUP");
-
-        registrarSolicitud("10234", "Ana Perez", "ana.perez@mail.test", "TUP", "CERTIFICADO", "BAJA",
-                "Certificado de alumno regular para la obra social", "03/11/2026");
-        registrarSolicitud("10871", "Bruno Diaz", "bruno.diaz@mail.test", "TUP", "EQUIVALENCIA", "MEDIA",
-                "Equivalencia de Programacion I aprobada en otra universidad", "01/11/2026");
-        registrarSolicitud("11502", "Carolina Lopez", "caro.lopez@mail.test", "TUP", "RECLAMO_NOTA", "ALTA",
-                "Reclamo por nota del segundo parcial de Base de Datos", "04/11/2026");
-        registrarSolicitud("10234", "Ana Perez", "ana.perez@mail.test", "TUP", "CAMBIO_COMISION", "MEDIA",
-                "Cambio a la comision de la noche por horario laboral", "02/11/2026");
-
-        asignarResponsable(2, 2);
-        cambiarEstado(2, "EN_REVISION", "Se pidio el programa analitico");
-        asignarResponsable(3, 3);
-        cambiarEstado(3, "EN_REVISION", "");
-        cambiarEstado(3, "APROBADA", "Se corrigio la nota");
     }
 }

@@ -25,7 +25,9 @@ import tpi.solicitudes.modelo.TipoSolicitud;
 import tpi.solicitudes.modelo.Estudiante;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.datos.DatosEjemplo;
 import tpi.solicitudes.servicio.ReporteService;
+import tpi.solicitudes.servicio.SolicitudService;
 import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 /**
@@ -38,7 +40,7 @@ class GestorSolicitudesCaracterizacionTest {
     private static final String DESCRIPCION_VALIDA = "Descripcion valida de prueba";
 
     private RepositorioEnMemoria repositorio;
-    private GestorSolicitudes gestor;
+    private SolicitudService gestor;
     private ReporteService reporteService;
     private ByteArrayOutputStream salida;
     private PrintStream salidaOriginal;
@@ -46,7 +48,7 @@ class GestorSolicitudesCaracterizacionTest {
     @BeforeEach
     void setUp() {
         repositorio = new RepositorioEnMemoria();
-        gestor = new GestorSolicitudes(repositorio, new ValidadorSolicitud());
+        gestor = new SolicitudService(repositorio, new ValidadorSolicitud());
         reporteService = new ReporteService(repositorio);
         salidaOriginal = System.out;
         salida = new ByteArrayOutputStream();
@@ -635,7 +637,7 @@ class GestorSolicitudesCaracterizacionTest {
 
         @BeforeEach
         void cargar() {
-            gestor.cargarDatosEjemplo();
+            DatosEjemplo.cargar(gestor);
         }
 
         private List<Integer> ids(List<Solicitud> resultado) {
@@ -698,7 +700,7 @@ class GestorSolicitudesCaracterizacionTest {
 
         @BeforeEach
         void cargar() {
-            gestor.cargarDatosEjemplo();
+            DatosEjemplo.cargar(gestor);
         }
 
         @Test

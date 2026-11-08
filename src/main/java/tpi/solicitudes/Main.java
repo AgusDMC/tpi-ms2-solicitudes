@@ -5,16 +5,18 @@ import java.util.Scanner;
 import tpi.solicitudes.modelo.Responsable;
 import tpi.solicitudes.modelo.Solicitud;
 import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.datos.DatosEjemplo;
 import tpi.solicitudes.servicio.ReporteService;
+import tpi.solicitudes.servicio.SolicitudService;
 import tpi.solicitudes.servicio.ValidadorSolicitud;
 
 public class Main {
 
     public static void main(String[] args) {
         RepositorioEnMemoria repositorio = new RepositorioEnMemoria();
-        GestorSolicitudes g = new GestorSolicitudes(repositorio, new ValidadorSolicitud());
+        SolicitudService g = new SolicitudService(repositorio, new ValidadorSolicitud());
         ReporteService reporte = new ReporteService(repositorio);
-        g.cargarDatosEjemplo();
+        DatosEjemplo.cargar(g);
         Scanner sc = new Scanner(System.in);
         int op = -1;
         while (op != 0) {
