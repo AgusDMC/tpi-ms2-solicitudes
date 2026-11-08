@@ -1,100 +1,22 @@
 package tpi.solicitudes;
 
-import java.util.List;
 import java.util.Scanner;
+import tpi.solicitudes.datos.DatosEjemplo;
+import tpi.solicitudes.repositorio.RepositorioEnMemoria;
+import tpi.solicitudes.repositorio.SolicitudRepository;
+import tpi.solicitudes.servicio.ReporteService;
+import tpi.solicitudes.servicio.SolicitudService;
+import tpi.solicitudes.servicio.ValidadorSolicitud;
+import tpi.solicitudes.ui.MenuConsola;
 
+// Arma las dependencias y arranca el sistema
 public class Main {
 
     public static void main(String[] args) {
-        GestorSolicitudes g = new GestorSolicitudes();
-        g.cargarDatosEjemplo();
-        Scanner sc = new Scanner(System.in);
-        int op = -1;
-        while (op != 0) {
-            System.out.println();
-            System.out.println("===== SISTEMA DE GESTION DE SOLICITUDES ACADEMICAS =====");
-            System.out.println("1. Registrar solicitud");
-            System.out.println("2. Cambiar estado");
-            System.out.println("3. Asignar responsable");
-            System.out.println("4. Buscar / filtrar solicitudes");
-            System.out.println("5. Listar todas");
-            System.out.println("6. Reporte");
-            System.out.println("0. Salir");
-            System.out.print("Opcion: ");
-            try {
-                op = Integer.parseInt(sc.nextLine().trim());
-            } catch (Exception e) {
-            }
-            if (op == 1) {
-                System.out.print("Legajo: ");
-                String legajo = sc.nextLine();
-                System.out.print("Nombre: ");
-                String nombre = sc.nextLine();
-                System.out.print("Email: ");
-                String email = sc.nextLine();
-                System.out.print("Carrera: ");
-                String carrera = sc.nextLine();
-                System.out.print("Tipo (CERTIFICADO, EQUIVALENCIA, CAMBIO_COMISION, RECLAMO_NOTA, OTRO): ");
-                String tipo = sc.nextLine().toUpperCase();
-                System.out.print("Prioridad (ALTA, MEDIA, BAJA): ");
-                String prioridad = sc.nextLine().toUpperCase();
-                System.out.print("Descripcion: ");
-                String desc = sc.nextLine();
-                System.out.print("Fecha (dd/MM/yyyy): ");
-                String fecha = sc.nextLine();
-                g.registrarSolicitud(legajo, nombre, email, carrera, tipo, prioridad, desc, fecha);
-            } else if (op == 2) {
-                System.out.print("Id de la solicitud: ");
-                int id = Integer.parseInt(sc.nextLine().trim());
-                System.out.print("Nuevo estado (EN_REVISION, APROBADA, RECHAZADA, CERRADA): ");
-                String nuevo = sc.nextLine().toUpperCase();
-                System.out.print("Observacion (opcional): ");
-                String obs = sc.nextLine();
-                int res = g.cambiarEstado(id, nuevo, obs);
-                if (res == 0) {
-                    System.out.println("Estado actualizado");
-                } else if (res == 1) {
-                    System.out.println("Error: no existe la solicitud");
-                } else if (res == 2) {
-                    System.out.println("Error: no se puede pasar a ese estado");
-                } else if (res == 3) {
-                    System.out.println("Error: primero hay que asignar un responsable");
-                }
-            } else if (op == 3) {
-                System.out.print("Id de la solicitud: ");
-                int id = Integer.parseInt(sc.nextLine().trim());
-                for (Responsable r : g.responsables) {
-                    System.out.println(r.id + ". " + r.nombre + " - " + r.area);
-                }
-                System.out.print("Id del responsable: ");
-                int idr = Integer.parseInt(sc.nextLine().trim());
-                if (g.asignarResponsable(id, idr)) {
-                    System.out.println("Responsable asignado");
-                } else {
-                    System.out.println("Error: no se pudo asignar");
-                }
-            } else if (op == 4) {
-                System.out.print("Buscar por (estado, tipo, prioridad, legajo, responsable): ");
-                String campo = sc.nextLine().toLowerCase();
-                System.out.print("Valor: ");
-                String valor = sc.nextLine();
-                List<Solicitud> l = g.buscar(campo, valor);
-                if (l.isEmpty()) {
-                    System.out.println("No se encontraron solicitudes");
-                }
-                for (Solicitud s : l) {
-                    System.out.println(g.formatear(s));
-                }
-            } else if (op == 5) {
-                for (Solicitud s : g.lista) {
-                    System.out.println(g.formatear(s));
-                }
-            } else if (op == 6) {
-                System.out.println(g.generarReporte());
-            } else if (op != 0) {
-                System.out.println("Opcion invalida");
-            }
-        }
-        System.out.println("Hasta luego");
+        SolicitudRepository repositorio = new RepositorioEnMemoria();
+        SolicitudService solicitudService = new SolicitudService(repositorio, new ValidadorSolicitud());
+        ReporteService reporteService = new ReporteService(repositorio);
+        DatosEjemplo.cargar(solicitudService);
+        new MenuConsola(solicitudService, reporteService, new Scanner(System.in)).iniciar();
     }
 }
